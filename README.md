@@ -9,11 +9,10 @@ NestJs GraphQL Gateway
 </p>
 
 <p align="center">
-<a href="https://img.shields.io/github/license/juicycleff/nestjs-graphql-gateway?style=flat-square" target="_blank"><img src="https://img.shields.io/github/license/juicycleff/ultimate-backend?style=flat-square" alt="License"/></a>
-<a href="https://img.shields.io/snyk/vulnerabilities/github/juicycleff/nestjs-graphql-gateway?style=flat-square" target="_blank"><img src="https://img.shields.io/snyk/vulnerabilities/github/juicycleff/ultimate-backend?style=flat-square" alt="Snyk"/></a>
-<a href="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-graphql-gateway?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/code-size/juicycleff/ultimate-backend?style=flat-square" alt="Code Size"/></a>
-<a href="https://img.shields.io/github/package-json/v/juicycleff/nestjs-graphql-gateway?style=flat-square" target="_blank"><img src="https://img.shields.io/github/package-json/v/juicycleff/ultimate-backend?style=flat-square" alt="Version"/></a>
-<a href="https://img.shields.io/github/languages/top/juicycleff/nestjs-graphql-gateway?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/top/juicycleff/ultimate-backend?style=flat-square" alt="Top Language"/></a>
+<a href="https://www.npmjs.com/package/nestjs-graphql-gateway" target="_blank"><img src="https://img.shields.io/npm/v/nestjs-graphql-gateway?style=flat-square" alt="NPM Version"/></a>
+<a href="https://img.shields.io/github/license/juicycleff/nestjs-graphql-gateway?style=flat-square" target="_blank"><img src="https://img.shields.io/github/license/juicycleff/nestjs-graphql-gateway?style=flat-square" alt="License"/></a>
+<a href="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-graphql-gateway?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-graphql-gateway?style=flat-square" alt="Code Size"/></a>
+<a href="https://img.shields.io/github/languages/top/juicycleff/nestjs-graphql-gateway?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/top/juicycleff/nestjs-graphql-gateway?style=flat-square" alt="Top Language"/></a>
 <a href="https://img.shields.io/codacy/grade/dc460840375d4ac995f5647a5ed10179?style=flat-square" target="_blank"><img src="https://img.shields.io/codacy/grade/dc460840375d4ac995f5647a5ed10179?style=flat-square" alt="Top Language"/></a>
 </p>
 
