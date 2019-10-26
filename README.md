@@ -19,14 +19,14 @@ NestJs Event Store
 ## Installation
 
 ```bash
-$ yarn install nestjs-event-store
+$ yarn install @juicycleff/nestjs-event-store
 ```
 
 ## Setup root app module
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { NestjsEventStoreModule } from 'nestjs-event-store';
+import { NestjsEventStoreModule } from '@juicycleff/nestjs-event-store';
 
 @Module({
   imports: [
@@ -55,8 +55,8 @@ export class AppModule {}
 ```typescript
 import { Module } from '@nestjs/common';
 import { CommandBus, CqrsModule, EventBus } from '@nestjs/cqrs';
-import { NestjsEventStoreModule } from 'nestjs-event-store/nestjs-event-store.module';
-import { EventStore } from 'nestjs-event-store/event-store';
+import { NestjsEventStoreModule } from '@juicycleff/nestjs-event-store/nestjs-event-store.module';
+import { EventStore } from '@juicycleff/nestjs-event-store/event-store';
 
 import {
   UserCommandHandlers,
