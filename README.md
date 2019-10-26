@@ -13,7 +13,7 @@ NestJs Event Store
 <a href="https://img.shields.io/npm/l/@juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/npm/l/@juicycleff/nestjs-event-store?style=flat-square" alt="License"/></a>
 <a href="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-event-store?style=flat-square" alt="Code Size"/></a>
 <a href="https://img.shields.io/github/languages/top/juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/top/juicycleff/nestjs-event-store?style=flat-square" alt="Top Language"/></a>
-<a href="https://img.shields.io/codacy/grade/81314c5a5cb04baabe3eb5262b859288?style=flat-square" target="_blank"><img src="https://img.shields.io/codacy/grade/dc460840375d4ac995f5647a5ed10179?style=flat-square" alt="Top Language"/></a>
+<a href="https://img.shields.io/codacy/grade/0944a2f07aca403da4d4637606af7478?style=flat-square" target="_blank"><img src="https://img.shields.io/codacy/grade/dc460840375d4ac995f5647a5ed10179?style=flat-square" alt="Top Language"/></a>
 </p>
 
 ## Installation
