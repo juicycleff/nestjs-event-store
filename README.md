@@ -50,7 +50,7 @@ import { NestjsEventStoreModule } from '@juicycleff/nestjs-event-store';
 export class AppModule {}
 ```
 
-## Setup Gateway
+## Setup module
 
 ```typescript
 import { Module } from '@nestjs/common';
