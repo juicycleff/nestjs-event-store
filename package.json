@@ -1,7 +1,7 @@
 {
-  "name": "nestjs-graphql-gateway",
+  "name": "nestjs-event-store",
   "version": "1.0.0",
-  "description": "NestJS GraphQL Apollo Federation extension",
+  "description": "NestJS CQRS module for EventStore.org CQRS",
   "author": {
     "name": "Rex Isaac Raphael",
     "email": "rex.rahael@outlook.com",
@@ -10,7 +10,7 @@
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
-  "repository": "https://github.com/juicycleff/nestjs-graphql-gateway",
+  "repository": "https://github.com/juicycleff/nestjs-event-store",
   "license": "MIT",
   "keywords": [],
   "scripts": {
@@ -35,7 +35,7 @@
     "reset": "git clean -dfx && git reset --hard && npm i",
     "clean": "trash build test",
     "prepare-release": "run-s reset test cov:check doc:html version doc:publish",
-    "preinstall": "node -e \"if(process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('nestjs-graphql-gateway must be installed with Yarn: https://yarnpkg.com/')\""
+    "preinstall": "node -e \"if(process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('nestjs-event-store must be installed with Yarn: https://yarnpkg.com/')\""
   },
   "scripts-info": {
     "info": "Display information about the package scripts",
@@ -53,30 +53,22 @@
   "engines": {
     "node": ">=8.9"
   },
-  "peerDependencies": {
-    "@apollo/federation": "^0.10.2",
-    "@nestjs/common": "^6.0.0",
+  "dependencies": {
+    "@nestjs/cqrs": "^6.0.1",
     "@nestjs/core": "^6.0.0",
-    "@apollo/gateway": "^0.10.8",
-    "@nestjs/graphql": "^6.5.3",
-    "apollo-server-express": "^2.9.7",
-    "rxjs": "^6.5.3"
+    "@nestjs/common": "^6.0.0",
+    "axios": "^0.19.0",
+    "geteventstore-promise2": "^3.1.3",
+    "node-eventstore-client": "^0.2.13"
+  },
+  "peerDependencies": {
+    "@nestjs/cqrs": "^6.0.1",
+    "@nestjs/core": "^6.0.0",
+    "@nestjs/common": "^6.0.0"
   },
   "devDependencies": {
     "@bitjson/npm-scripts-info": "^1.0.0",
     "@bitjson/typedoc": "^0.15.0-0",
-    "codecov": "^3.5.0",
-    "cz-conventional-changelog": "^2.1.0",
-    "gh-pages": "^2.0.1",
-    "npm-run-all": "^4.1.5",
-    "nyc": "^14.1.1",
-    "open-cli": "^5.0.0",
-    "prettier": "^1.18.2",
-    "standard-version": "^6.0.1",
-    "trash-cli": "^3.0.0",
-    "tslint-config-prettier": "^1.18.0",
-    "tslint-immutable": "^6.0.1",
-    "typescript": "^3.5.3",
     "@nestjs/cli": "^6.9.0",
     "@nestjs/schematics": "^6.7.0",
     "@nestjs/testing": "^6.7.1",
@@ -84,17 +76,29 @@
     "@types/lodash": "^4.14.144",
     "@types/node": "^12.7.5",
     "@types/supertest": "^2.0.8",
+    "codecov": "^3.5.0",
+    "cz-conventional-changelog": "^2.1.0",
+    "gh-pages": "^2.0.1",
     "jest": "^24.9.0",
+    "npm-run-all": "^4.1.5",
+    "nyc": "^14.1.1",
+    "open-cli": "^5.0.0",
+    "prettier": "^1.18.2",
     "remark-cli": "^7.0.0",
     "remark-lint-emphasis-marker": "^1.0.3",
     "remark-lint-strong-marker": "^1.0.3",
     "remark-preset-lint-recommended": "^3.0.3",
+    "standard-version": "^6.0.1",
     "supertest": "^4.0.2",
+    "trash-cli": "^3.0.0",
     "ts-jest": "^24.1.0",
     "ts-loader": "^6.1.1",
     "ts-node": "^8.4.1",
     "tsconfig-paths": "^3.9.0",
-    "tslint": "^5.20.0"
+    "tslint": "^5.20.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-immutable": "^6.0.1",
+    "typescript": "^3.5.3"
   },
   "jest": {
     "globals": {

@@ -1,46 +1,50 @@
 <h1 align="center">
-NestJs GraphQL Gateway
+NestJs Event Store
 </h1>
   
 <p align="center">
-  NestJS GraphQL Apollo Federation extension. You keep using @nestjs/graphql for all other steps
+  NestJS GraphQL module for EventStore.org. It requires @nestjs/cqrs.
 </p>
     <p align="center">
 </p>
 
 <p align="center">
-<a href="https://www.npmjs.com/package/nestjs-graphql-gateway" target="_blank"><img src="https://img.shields.io/npm/v/nestjs-graphql-gateway?style=flat-square" alt="NPM Version"/></a>
-<a href="https://img.shields.io/github/license/juicycleff/nestjs-graphql-gateway?style=flat-square" target="_blank"><img src="https://img.shields.io/github/license/juicycleff/nestjs-graphql-gateway?style=flat-square" alt="License"/></a>
-<a href="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-graphql-gateway?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-graphql-gateway?style=flat-square" alt="Code Size"/></a>
-<a href="https://img.shields.io/github/languages/top/juicycleff/nestjs-graphql-gateway?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/top/juicycleff/nestjs-graphql-gateway?style=flat-square" alt="Top Language"/></a>
+<a href="https://www.npmjs.com/package/nestjs-event-store" target="_blank"><img src="https://img.shields.io/npm/v/nestjs-graphql-gateway?style=flat-square" alt="NPM Version"/></a>
+<a href="https://img.shields.io/github/license/juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/github/license/juicycleff/nestjs-event-store?style=flat-square" alt="License"/></a>
+<a href="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-event-store?style=flat-square" alt="Code Size"/></a>
+<a href="https://img.shields.io/github/languages/top/juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/top/juicycleff/nestjs-event-store?style=flat-square" alt="Top Language"/></a>
 <a href="https://img.shields.io/codacy/grade/81314c5a5cb04baabe3eb5262b859288?style=flat-square" target="_blank"><img src="https://img.shields.io/codacy/grade/dc460840375d4ac995f5647a5ed10179?style=flat-square" alt="Top Language"/></a>
 </p>
 
 ## Installation
 
 ```bash
-$ yarn install nestjs-graphql-gateway
+$ yarn install nestjs-event-store
 ```
 
-## Setup federated service
+## Setup root app module
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { GraphqlDistributedModule } from 'nestjs-graphql-gateway';
+import { NestjsEventStoreModule } from 'nestjs-event-store';
 
 @Module({
   imports: [
-    GraphqlDistributedModule.forRoot({
-      typePaths: [path.join(process.cwd() + '/apps/service-auth/src', '/**/*.graphql')],
-      introspection: true,
-      playground: {
-        workspaceName: 'GRAPHQL CQRS',
-        settings: {
-          'editor.theme': 'light',
-        },
+    NestjsEventStoreModule.forRoot({
+      http: {
+        port: parseInt(process.env.ES_HTTP_PORT, 10),
+        protocol: process.env.ES_HTTP_PROTOCOL,
       },
-      context: (ctx) => ctx,
-    })
+      tcp: {
+        credentials: {
+          password: process.env.ES_TCP_PASSWORD,
+          username: process.env.ES_TCP_USERNAME,
+        },
+        hostname: process.env.ES_TCP_HOSTNAME,
+        port: parseInt(process.env.ES_TCP_PORT, 10),
+        protocol: process.env.ES_TCP_PROTOCOL,
+      },
+    }),
   ]
 })
 export class AppModule {}
@@ -50,26 +54,52 @@ export class AppModule {}
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { GraphqlDistributedGatewayModule } from 'nestjs-graphql-gateway';
+import { CommandBus, CqrsModule, EventBus } from '@nestjs/cqrs';
+import { NestjsEventStoreModule } from 'nestjs-event-store/nestjs-event-store.module';
+import { EventStore } from 'nestjs-event-store/event-store';
+
+import {
+  UserCommandHandlers,
+  UserCreatedEvent,
+  UserEventHandlers,
+  UserQueryHandlers,
+} from '../cqrs';
+import { UserSagas } from './sagas';
 
 @Module({
   imports: [
-    GraphqlDistributedGatewayModule.forRoot({
-      subscriptions: false,
-      path: '/graphql',
-      context: context => context,
-      serviceList: [
-        { name: 'auth', url: 'http://localhost:1000/graphql' },
-        { name: 'user', url: 'http://localhost:2000/graphql' },
-        // more services
-      ],
-      buildService({ url }) {
-        return new HeadersDatasource({ url });
-      },
+    CqrsModule,
+    NestjsEventStoreModule.forFeature({
+      name: 'user',
+      resolveLinkTos: false,
     }),
-  ]
+  ],
+  
+  providers: [
+    UserSagas,
+    ...UserQueryHandlers,
+    ...UserCommandHandlers,
+    ...UserEventHandlers,
+  ],
 })
-export class AppModule {}
+export class UserModule {
+  constructor(
+    private readonly command$: CommandBus,
+    private readonly event$: EventBus,
+    private readonly authSagas: AuthSagas,
+    private readonly eventStore: EventStore,
+  ) {}
+
+  onModuleInit(): any {
+    this.eventStore.setEventHandlers(this.eventHandlers);
+    this.eventStore.bridgeEventsTo((this.event$ as any).subject$);
+    this.event$.publisher = this.eventStore;
+  }
+
+  eventHandlers = {
+    UserCreatedEvent: (data) => new UserCreatedEvent(data),
+  };
+}
 ```
 
 ## License
