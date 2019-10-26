@@ -3,13 +3,13 @@ NestJs Event Store
 </h1>
   
 <p align="center">
-  NestJS GraphQL module for EventStore.org. It requires @nestjs/cqrs.
+  NestJS CQRS module for EventStore.org. It requires @nestjs/cqrs.
 </p>
     <p align="center">
 </p>
 
 <p align="center">
-<a href="https://www.npmjs.com/package/nestjs-event-store" target="_blank"><img src="https://img.shields.io/npm/v/nestjs-graphql-gateway?style=flat-square" alt="NPM Version"/></a>
+<a href="https://www.npmjs.com/package/nestjs-event-store" target="_blank"><img src="https://img.shields.io/npm/v/nestjs-event-store?style=flat-square" alt="NPM Version"/></a>
 <a href="https://img.shields.io/github/license/juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/github/license/juicycleff/nestjs-event-store?style=flat-square" alt="License"/></a>
 <a href="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-event-store?style=flat-square" alt="Code Size"/></a>
 <a href="https://img.shields.io/github/languages/top/juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/top/juicycleff/nestjs-event-store?style=flat-square" alt="Top Language"/></a>
