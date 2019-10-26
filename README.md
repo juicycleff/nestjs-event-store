@@ -9,8 +9,8 @@ NestJs Event Store
 </p>
 
 <p align="center">
-<a href="https://www.npmjs.com/package/nestjs-event-store" target="_blank"><img src="https://img.shields.io/npm/v/nestjs-event-store?style=flat-square" alt="NPM Version"/></a>
-<a href="https://img.shields.io/github/license/juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/github/license/juicycleff/nestjs-event-store?style=flat-square" alt="License"/></a>
+<a href="https://www.npmjs.com/package/@juicycleff/nestjs-event-store" target="_blank"><img src="https://img.shields.io/npm/v/@juicycleff/nestjs-event-store?style=flat-square" alt="NPM Version"/></a>
+<a href="https://img.shields.io/npm/l/@juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/npm/l/@juicycleff/nestjs-event-store?style=flat-square" alt="License"/></a>
 <a href="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/code-size/juicycleff/nestjs-event-store?style=flat-square" alt="Code Size"/></a>
 <a href="https://img.shields.io/github/languages/top/juicycleff/nestjs-event-store?style=flat-square" target="_blank"><img src="https://img.shields.io/github/languages/top/juicycleff/nestjs-event-store?style=flat-square" alt="Top Language"/></a>
 <a href="https://img.shields.io/codacy/grade/81314c5a5cb04baabe3eb5262b859288?style=flat-square" target="_blank"><img src="https://img.shields.io/codacy/grade/dc460840375d4ac995f5647a5ed10179?style=flat-square" alt="Top Language"/></a>
@@ -86,7 +86,6 @@ export class UserModule {
   constructor(
     private readonly command$: CommandBus,
     private readonly event$: EventBus,
-    private readonly authSagas: AuthSagas,
     private readonly eventStore: EventStore,
   ) {}
 
