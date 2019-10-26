@@ -55,8 +55,7 @@ export class AppModule {}
 ```typescript
 import { Module } from '@nestjs/common';
 import { CommandBus, CqrsModule, EventBus } from '@nestjs/cqrs';
-import { NestjsEventStoreModule } from '@juicycleff/nestjs-event-store/nestjs-event-store.module';
-import { EventStore } from '@juicycleff/nestjs-event-store/event-store';
+import { NestjsEventStoreModule, EventStore } from '@juicycleff/nestjs-event-store';
 
 import {
   UserCommandHandlers,
