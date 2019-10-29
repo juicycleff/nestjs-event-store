@@ -66,8 +66,13 @@ export class EventStore implements IEventPublisher, IMessageSource {
       if (event.isJson && typeof event.data !== 'string') {
         const eventType = event.eventType;
         const data = event.data;
-        event = this.eventHandlers[eventType](...Object.values(data));
-        subject.next(event);
+
+        if (this.eventHandlers && this.eventHandlers[eventType]) {
+          event = this.eventHandlers[eventType](...Object.values(data));
+          subject.next(event);
+        } else {
+          Logger.warn(`Event of type ${eventType} not handles`, this.constructor.name)
+        }
       } else {
         const eventUrl =  `${this.eventStoreHostUrl}${event.metadata.$o}/${event.data.split('@')[0]}?embed=body`;
         return axios.get(eventUrl, {
@@ -81,8 +86,13 @@ export class EventStore implements IEventPublisher, IMessageSource {
             const temp = JSON.parse(rawData);
             const data = temp.content.data;
             const eventType = temp.content.eventType;
-            event = this.eventHandlers[eventType](...Object.values(data));
-            subject.next(event);
+
+            if (this.eventHandlers && this.eventHandlers[eventType]) {
+              event = this.eventHandlers[eventType](...Object.values(data));
+              subject.next(event);
+            } else {
+              Logger.warn(`Event of type ${eventType} not handles`, this.constructor.name)
+            }
           });
         });
       }
