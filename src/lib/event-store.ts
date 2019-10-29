@@ -71,7 +71,7 @@ export class EventStore implements IEventPublisher, IMessageSource {
           event = this.eventHandlers[eventType](...Object.values(data));
           subject.next(event);
         } else {
-          Logger.warn(`Event of type ${eventType} not handles`, this.constructor.name)
+          Logger.warn(`Event of type ${eventType} not handled`, this.constructor.name)
         }
       } else {
         const eventUrl =  `${this.eventStoreHostUrl}${event.metadata.$o}/${event.data.split('@')[0]}?embed=body`;
@@ -91,7 +91,7 @@ export class EventStore implements IEventPublisher, IMessageSource {
               event = this.eventHandlers[eventType](...Object.values(data));
               subject.next(event);
             } else {
-              Logger.warn(`Event of type ${eventType} not handles`, this.constructor.name)
+              Logger.warn(`Event of type ${eventType} not handled`, this.constructor.name)
             }
           });
         });
