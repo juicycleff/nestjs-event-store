@@ -5,7 +5,7 @@
 //
 
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { IEvent, IEventPublisher, EventBus, CommandBus, QueryBus, IMessageSource } from '@nestjs/cqrs';
+import { IEvent, IEventPublisher, EventBus, IMessageSource } from '@nestjs/cqrs';
 import { ExplorerService } from '@nestjs/cqrs/dist/services/explorer.service';
 import * as Long from 'long';
 import { Subject } from 'rxjs';
@@ -59,8 +59,6 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
     @Inject(ProvidersConstants.EVENT_STORE_STREAM_CONFIG_PROVIDER) esStreamConfig: EventStoreOptionConfig,
     private readonly explorerService: ExplorerService,
     private readonly eventsBus: EventBus,
-    private readonly commandsBus: CommandBus,
-    private readonly queryBus: QueryBus,
   ) {
 
     this.eventStore = eventStore;
@@ -303,13 +301,6 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
     this.eventHandlers = { ...this.eventHandlers, ...eventHandlers };
   }
   onModuleInit(): any {
-    const { events, queries, sagas, commands } = this.explorerService.explore();
-
-    this.eventsBus.register(events);
-    this.commandsBus.register(commands);
-    this.queryBus.register(queries);
-    this.eventsBus.registerSagas(sagas);
-
     this.subject$ = (this.eventsBus as any).subject$;
     this.bridgeEventsTo((this.eventsBus as any).subject$);
     this.eventsBus.publisher = this

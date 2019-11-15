@@ -1,13 +1,13 @@
-import { DynamicModule, Global, Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { EventStoreOptionConfig } from './contract/event-store-option.config';
 import { ProvidersConstants } from './contract/nestjs-event-store.constant';
 import { EventStore } from './event-store';
 import { IEventStoreConnectConfig } from './contract/event-store-connect-config.interface';
+import { NestjsEventStoreCoreModule } from './nestjs-event-store-core.module';
 import { eventStoreProviders } from './providers/nestjs-event-store.provider';
 import { ExplorerService } from '@nestjs/cqrs/dist/services/explorer.service';
 import { CqrsModule } from '@nestjs/cqrs';
 
-@Global()
 @Module({
   imports: [CqrsModule],
   providers: [
@@ -28,16 +28,9 @@ import { CqrsModule } from '@nestjs/cqrs';
 export class NestjsEventStoreModule {
 
   static forRoot(option: IEventStoreConnectConfig): DynamicModule {
-    const configProv = {
-        provide: ProvidersConstants.EVENT_STORE_CONNECTION_CONFIG_PROVIDER,
-        useValue: {
-          ...option,
-        },
-      };
     return {
-      module: NestjsEventStoreModule,
-      providers: [configProv],
-      exports: [configProv],
+      module: NestjsEventStoreCoreModule,
+      imports: [NestjsEventStoreCoreModule.forRoot(option)],
     };
   }
 
@@ -48,7 +41,7 @@ export class NestjsEventStoreModule {
     }
 
     return {
-      module: NestjsEventStoreModule,
+      module: NestjsEventStoreCoreModule,
       providers: [
         ExplorerService,
         {
