@@ -1,4 +1,4 @@
-import { IEventStoreConnectConfig } from './contract/event-store-connect-config.interface';
+import { IEventStoreConnectConfig } from '../contract/event-store-connect-config.interface';
 
 export class NestStoreConfigProvider {
   private readonly esConfig: IEventStoreConnectConfig;

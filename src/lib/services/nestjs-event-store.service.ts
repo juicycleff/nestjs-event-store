@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { NestjsEventStore } from './nestjs-event-store.class';
-import { ProvidersConstants } from './nestjs-event-store.constant';
+import { NestjsEventStore } from '../nestjs-event-store.class';
+import { ProvidersConstants } from '../contract/nestjs-event-store.constant';
 
 @Injectable()
 export class NestjsEventStoreService {

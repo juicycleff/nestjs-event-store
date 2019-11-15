@@ -1,34 +1,76 @@
-import { TCPClient, EventFactory} from 'geteventstore-promise2';
+import { Logger } from '@nestjs/common';
+import assert from 'assert';
+import uuid from 'uuid';
+import { EventStoreNodeConnection, ConnectionSettings, TcpEndPoint, createConnection } from 'node-eventstore-client';
 
 /**
- * @description Event store setup from eventstore.com
+ * @description Event store setup from eventstore.org
  */
 export class NestjsEventStore {
   [x: string]: any;
+  private logger: Logger = new Logger(this.constructor.name);
+  private connection: EventStoreNodeConnection;
+  public isConnected: boolean;
 
   constructor() {
-    // @ts-ignore
     this.type = 'event-store';
-    // @ts-ignore
-    this.eventFactory = new EventFactory();
   }
 
-  connect(config) {
-    // @ts-ignore
-    this.client = new TCPClient(config);
-    return this;
+  connect(options: ConnectionSettings, endpoint: TcpEndPoint) {
+
+    try {
+      this.connection = createConnection(options, endpoint);
+      this.connection.connect();
+
+      this.connection.on('connected', () => {
+        this.isConnected = true;
+        this.logger.log('EventStore connected!');
+      });
+      this.connection.on('closed', () => {
+        this.isConnected = false;
+        this.logger.error('EventStore closed!');
+        this.connect(options, endpoint);
+      });
+
+      return this;
+    } catch (e) {
+      this.logger.error(e.message);
+      throw new Error(e);
+    }
   }
 
-  getClient() {
-    return this.client;
+  getConnection(): EventStoreNodeConnection {
+    return this.connection;
   }
 
   newEvent(name, payload) {
-    return this.eventFactory.newEvent(name, payload);
+    return this.newEventBuilder(name, payload);
   }
 
+  private newEventBuilder(eventType, data, metadata?, eventId?) {
+    assert(eventType);
+    assert(data);
+
+    const event: {
+      eventId: string | any,
+      eventType?: string | any,
+      data?: any,
+      metadata?: any,
+    } = {
+      eventId: eventId || uuid.v4(),
+      eventType,
+      data
+    };
+
+    if (metadata !== undefined) { event.metadata = metadata; }
+    return event;
+  }
+
+  /**
+   * Close event store connection
+   */
   close() {
-    this.client.close();
+    this.connection.close();
     return this;
   }
 }

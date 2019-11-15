@@ -1,5 +1,5 @@
-import { ProvidersConstants } from './nestjs-event-store.constant';
-import { NestjsEventStore } from './nestjs-event-store.class';
+import { ProvidersConstants } from '../contract/nestjs-event-store.constant';
+import { NestjsEventStore } from '../nestjs-event-store.class';
 
 export const eventStoreProviders = [
   {

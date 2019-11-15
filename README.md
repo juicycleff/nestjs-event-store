@@ -22,7 +22,79 @@ NestJs Event Store
 $ yarn install @juicycleff/nestjs-event-store
 ```
 
-## Setup root app module
+### Setup from versions from `v2.0.0`
+##### Setup root app module
+
+```typescript
+import { Module } from '@nestjs/common';
+import { NestjsEventStoreModule } from '@juicycleff/nestjs-event-store';
+
+@Module({
+  imports: [
+    NestjsEventStoreModule.forRoot({
+      tcpEndpoint: {
+        host: process.env.ES_TCP_HOSTNAME || AppConfig.eventstore?.hostname,
+        port: parseInt(process.env.ES_TCP_PORT, 10) || AppConfig.eventstore?.tcpPort,
+      },
+      options: {
+        defaultUserCredentials: {
+          password: AppConfig.eventstore?.tcpPassword,
+          username: AppConfig.eventstore?.tcpUsername,
+        },
+      },
+    }),
+  ]
+})
+export class AppModule {}
+```
+
+## Setup module
+*Note* `featureStreamName` field is not important if you're subscription type is persistent'
+
+```typescript
+import { Module } from '@nestjs/common';
+import { CommandBus, CqrsModule, EventBus } from '@nestjs/cqrs';
+import { NestjsEventStoreModule, EventStore, EventStoreSubscriptionType } from '@juicycleff/nestjs-event-store';
+
+import {
+  UserCommandHandlers,
+  UserCreatedEvent,
+  UserEventHandlers,
+  UserQueryHandlers,
+} from '../cqrs';
+import { UserSagas } from './sagas';
+
+@Module({
+  imports: [
+    CqrsModule,
+    NestjsEventStoreModule.forFeature({
+      featureStreamName: '$ce-user',
+      subscriptions: [
+        {
+          type: EventStoreSubscriptionType.CatchUp,
+          stream: '$ce-user',
+        },
+      ],
+      eventHandlers: {
+        UserLoggedInEvent: (data) => new UserLoggedInEvent(data),
+        UserRegisteredEvent: (data) => new UserRegisteredEvent(data),
+        EmailVerifiedEvent: (data) => new EmailVerifiedEvent(data),
+      },
+    }),
+  ],
+  
+  providers: [
+    UserSagas,
+    ...UserQueryHandlers,
+    ...UserCommandHandlers,
+    ...UserEventHandlers,
+  ],
+})
+export class UserModule {}
+```
+
+### Setup from versions below `v2.0.0`
+#### Setup root app module
 
 ```typescript
 import { Module } from '@nestjs/common';
@@ -50,7 +122,7 @@ import { NestjsEventStoreModule } from '@juicycleff/nestjs-event-store';
 export class AppModule {}
 ```
 
-## Setup module
+#### Setup module
 
 ```typescript
 import { Module } from '@nestjs/common';
@@ -99,6 +171,10 @@ export class UserModule {
   };
 }
 ```
+
+
+## Notice
+ `2.0.0` release inspired by [nestjs-eventstore](https://github.com/daypaio/nestjs-eventstore)
 
 ## License
 
