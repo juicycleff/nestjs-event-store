@@ -1,10 +1,16 @@
 
 import { IEvent } from '@nestjs/cqrs';
-import { EventStoreCatchUpSubscription, EventStorePersistentSubscription as ESStorePersistentSub } from 'node-eventstore-client';
+import * as Long from 'long';
+import {
+  EventStoreCatchUpSubscription,
+  EventStorePersistentSubscription as ESStorePersistentSub,
+  EventStoreSubscription as ESVolatileSubscription,
+} from 'node-eventstore-client';
 
 export enum EventStoreSubscriptionType {
   Persistent,
   CatchUp,
+  Volatile,
 }
 
 export interface EventStorePersistentSubscription {
@@ -18,15 +24,19 @@ export interface EventStoreCatchupSubscription {
   type: EventStoreSubscriptionType.CatchUp;
   stream: string;
   resolveLinkTos?: boolean;
+  lastCheckpoint?: Long|number|null;
 }
 
-export interface EventStoreSubscriptionConfig {
-  persistentSubscriptionName: string;
+export interface EventStoreVolatileSubscription {
+  type: EventStoreSubscriptionType.Volatile;
+  stream: string;
+  resolveLinkTos?: boolean;
 }
 
 export type EventStoreSubscription =
   | EventStorePersistentSubscription
-  | EventStoreCatchupSubscription;
+  | EventStoreCatchupSubscription
+  | EventStoreVolatileSubscription;
 
 export interface IEventConstructors {
   [key: string]: (...args: any[]) => IEvent;
@@ -37,6 +47,10 @@ export interface ExtendedCatchUpSubscription extends EventStoreCatchUpSubscripti
 }
 
 export interface ExtendedPersistentSubscription extends ESStorePersistentSub {
+  isLive?: boolean | undefined;
+}
+
+export interface ExtendedVolatileSubscription extends ESVolatileSubscription {
   isLive?: boolean | undefined;
 }
 

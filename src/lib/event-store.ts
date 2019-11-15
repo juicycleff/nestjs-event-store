@@ -7,6 +7,7 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { IEvent, IEventPublisher, EventBus, CommandBus, QueryBus, IMessageSource } from '@nestjs/cqrs';
 import { ExplorerService } from '@nestjs/cqrs/dist/services/explorer.service';
+import * as Long from 'long';
 import { Subject } from 'rxjs';
 import { v4 } from 'uuid';
 import {
@@ -14,6 +15,7 @@ import {
   EventStorePersistentSubscription,
   ResolvedEvent,
   EventStoreCatchUpSubscription,
+  EventStoreSubscription as EventStoreVolatileSubscription,
   expectedVersion,
   createJsonEventData,
 } from 'node-eventstore-client';
@@ -22,7 +24,11 @@ import {
   IEventConstructors,
   EventStoreSubscriptionType,
   EventStorePersistentSubscription as ESPersistentSubscription,
-  EventStoreCatchupSubscription as ESCatchUpSubscription, ExtendedCatchUpSubscription, ExtendedPersistentSubscription
+  EventStoreCatchupSubscription as ESCatchUpSubscription,
+  EventStoreVolatileSubscription as ESVolatileSubscription,
+  ExtendedCatchUpSubscription,
+  ExtendedVolatileSubscription,
+  ExtendedPersistentSubscription,
 } from './contract/event-store-option.config';
 import { NestjsEventStore } from './nestjs-event-store.class';
 import { ProvidersConstants } from './contract/nestjs-event-store.constant';
@@ -36,13 +42,16 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
   private logger = new Logger(this.constructor.name);
   private eventStore: NestjsEventStore;
   private eventHandlers: IEventConstructors;
+  private subject$: Subject<IEvent>;
+  private readonly featureStream?: string;
   private catchupSubscriptions: ExtendedCatchUpSubscription[] = [];
   private catchupSubscriptionsCount: number;
-  private subject$: Subject<IEvent>;
 
   private persistentSubscriptions: ExtendedPersistentSubscription[] = [];
   private persistentSubscriptionsCount: number;
-  private readonly featureStream?: string;
+
+  private volatileSubscriptions: ExtendedVolatileSubscription[] = [];
+  private volatileSubscriptionsCount: number;
 
   constructor(
     @Inject(ProvidersConstants.EVENT_STORE_PROVIDER) eventStore: any,
@@ -67,12 +76,20 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
       return sub.type === EventStoreSubscriptionType.Persistent;
     });
 
+    const volatileSubscriptions = esStreamConfig.subscriptions.filter((sub) => {
+      return sub.type === EventStoreSubscriptionType.Volatile;
+    });
+
     this.subscribeToCatchUpSubscriptions(
       catchupSubscriptions as ESCatchUpSubscription[],
     );
 
     this.subscribeToPersistentSubscriptions(
       persistentSubscriptions as ESPersistentSubscription[],
+    );
+
+    this.subscribeToVolatileSubscriptions(
+      volatileSubscriptions as ESVolatileSubscription[],
     );
   }
 
@@ -113,17 +130,34 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
   subscribeToCatchUpSubscriptions(subscriptions: ESCatchUpSubscription[]) {
     this.catchupSubscriptionsCount = subscriptions.length;
     this.catchupSubscriptions = subscriptions.map((subscription) => {
-      return this.subscribeToCatchupSubscription(subscription.stream);
+      return this.subscribeToCatchupSubscription(
+        subscription.stream,
+        subscription.resolveLinkTos,
+        subscription.lastCheckpoint,
+      );
     });
   }
 
-  subscribeToCatchupSubscription(stream: string): ExtendedCatchUpSubscription {
+  async subscribeToVolatileSubscriptions(subscriptions: ESVolatileSubscription[]) {
+    this.volatileSubscriptionsCount = subscriptions.length;
+    this.volatileSubscriptions = await Promise.all(
+      subscriptions.map(async (subscription) => {
+        return await this.subscribeToVolatileSubscription(subscription.stream, subscription.resolveLinkTos);
+      })
+    );
+  }
+
+  subscribeToCatchupSubscription(
+    stream: string,
+    resolveLinkTos: boolean = true,
+    lastCheckpoint: number | Long | null = 0,
+  ): ExtendedCatchUpSubscription {
     this.logger.log(`Catching up and subscribing to stream ${stream}!`);
     try {
       return this.eventStore.getConnection().subscribeToStreamFrom(
         stream,
-        0,
-        true,
+        lastCheckpoint,
+        resolveLinkTos,
         (sub, payload) => this.onEvent(sub, payload),
         subscription =>
           this.onLiveProcessingStarted(
@@ -137,12 +171,42 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
     }
   }
 
+  async subscribeToVolatileSubscription(stream: string, resolveLinkTos: boolean = true): Promise<ExtendedVolatileSubscription> {
+    this.logger.log(`Volatile and subscribing to stream ${stream}!`);
+    try {
+      const resolved = await this.eventStore.getConnection().subscribeToStream(
+        stream,
+        resolveLinkTos,
+        (sub, payload) => this.onEvent(sub, payload),
+        (sub, reason, error) =>
+          this.onDropped(sub as ExtendedVolatileSubscription, reason, error),
+      ) as ExtendedVolatileSubscription;
+
+      this.logger.log('Volatile processing of EventStore events started!');
+      resolved.isLive = true;
+      return resolved
+    } catch (err) {
+      this.logger.error(err.message);
+    }
+  }
+
   get allCatchUpSubscriptionsLive(): boolean {
     const initialized =
       this.catchupSubscriptions.length === this.catchupSubscriptionsCount;
     return (
       initialized &&
       this.catchupSubscriptions.every((subscription) => {
+        return !!subscription && subscription.isLive;
+      })
+    );
+  }
+
+  get allVolatileSubscriptionsLive(): boolean {
+    const initialized =
+      this.volatileSubscriptions.length === this.volatileSubscriptionsCount;
+    return (
+      initialized &&
+      this.volatileSubscriptions.every((subscription) => {
         return !!subscription && subscription.isLive;
       })
     );
@@ -168,13 +232,13 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
        Connecting to persistent subscription ${subscriptionName} on stream ${stream}!
       `);
 
-      const resolved: ExtendedPersistentSubscription = await this.eventStore.getConnection().connectToPersistentSubscription(
+      const resolved = await this.eventStore.getConnection().connectToPersistentSubscription(
         stream,
         subscriptionName,
         (sub, payload) => this.onEvent(sub, payload),
         (sub, reason, error) =>
           this.onDropped(sub as ExtendedPersistentSubscription, reason, error),
-      );
+      ) as ExtendedPersistentSubscription;
 
       resolved.isLive = true;
 
@@ -187,7 +251,8 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
   async onEvent(
     _subscription:
       | EventStorePersistentSubscription
-      | EventStoreCatchUpSubscription,
+      | EventStoreCatchUpSubscription
+      | EventStoreVolatileSubscription,
     payload: ResolvedEvent,
   ) {
     const { event } = payload;
@@ -215,7 +280,7 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
   }
 
   onDropped(
-    subscription: ExtendedPersistentSubscription | ExtendedCatchUpSubscription,
+    subscription: ExtendedPersistentSubscription | ExtendedCatchUpSubscription| ExtendedVolatileSubscription,
     _reason: string,
     error: Error,
   ) {
@@ -230,7 +295,7 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
 
   get isLive(): boolean {
     return (
-      this.allCatchUpSubscriptionsLive && this.allPersistentSubscriptionsLive
+      this.allCatchUpSubscriptionsLive && this.allPersistentSubscriptionsLive && this.allVolatileSubscriptionsLive
     );
   }
 
