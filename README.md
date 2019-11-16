@@ -22,6 +22,10 @@ NestJs Event Store
 $ yarn install @juicycleff/nestjs-event-store
 ```
 
+## Description
+This module aims to bridge the gap between NestJs and [Event Store](https://eventstore.org). It supports all different subscription strategies of supported by Event Store.
+Such as Volatile, CatchUp and Persistent subscriptions fairly easily. 
+
 ### Setup from versions from `v2.0.0`
 ##### Setup root app module
 
@@ -73,6 +77,18 @@ import { UserSagas } from './sagas';
         {
           type: EventStoreSubscriptionType.CatchUp,
           stream: '$ce-user',
+          resolveLinkTos: true, // Default is true (Optional)
+          lastCheckpoint: 13, // Default is 0 (Optional)
+        },
+        {
+          type: EventStoreSubscriptionType.Volatile,
+          stream: '$ce-user',
+        },
+        {
+          type: EventStoreSubscriptionType.Persistent,
+          stream: '$ce-user',
+          persistentSubscriptionName: 'steamName',
+          resolveLinkTos: true,  // Default is true (Optional)
         },
       ],
       eventHandlers: {
