@@ -24,7 +24,9 @@ $ yarn install @juicycleff/nestjs-event-store
 
 ## Description
 This module aims to bridge the gap between NestJs and [Event Store](https://eventstore.org). It supports all different subscription strategies of supported by Event Store.
-Such as Volatile, CatchUp and Persistent subscriptions fairly easily. 
+Such as Volatile, CatchUp and Persistent subscriptions fairly easily. There is support for a storage adapter interface for storing catchup events type last checkpoint position, so
+the checkpoint can be read on start up; The adapter interface is very slim and easy and can be assigned preferably using the `EventStoreModule.registerFeatureAsync` method.
+Example data store examples coming soon.
 
 ### Setup from versions from `v3.0.0`
 ##### Setup root app module
@@ -71,6 +73,7 @@ export class AppModule {}
 ## Setup module
 *Note* `featureStreamName` field is not important if you're subscription type is persistent'
 
+##### Setup feature module
 ```typescript
 import { Module } from '@nestjs/common';
 import { CommandBus, CqrsModule, EventBus } from '@nestjs/cqrs';
@@ -83,12 +86,14 @@ import {
   UserQueryHandlers,
 } from '../cqrs';
 import { UserSagas } from './sagas';
+import { MongoStore } from './mongo-eventstore-adapter';
 
 @Module({
   imports: [
     CqrsModule,
-    EventStoreModule.forFeature({
+    EventStoreModule.registerFeature({
       featureStreamName: '$ce-user',
+      store: MongoStore, // Optional mongo store for persisting catchup events position for microservices to mitigate failures. Must implement IAdapterStore
       subscriptions: [
         {
           type: EventStoreSubscriptionType.CatchUp,
@@ -123,6 +128,22 @@ import { UserSagas } from './sagas';
   ],
 })
 export class UserModule {}
+```
+
+##### Setup async feature module
+```typescript
+import { Module } from '@nestjs/common';
+import { EventStoreModule } from '@juicycleff/nestjs-event-store';
+import { EventStoreFeatureService } from './user-eventstore-feature.service';
+
+@Module({
+  imports: [
+    EventStoreModule.registerFeatureAsync({
+      useClass: EventStoreFeatureService
+    }),
+  ]
+})
+export class AppModule {}
 ```
 
 ### Setup from versions below `v2.0.0`

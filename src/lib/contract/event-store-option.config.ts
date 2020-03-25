@@ -6,6 +6,7 @@ import {
   EventStorePersistentSubscription as ESStorePersistentSub,
   EventStoreSubscription as ESVolatileSubscription,
 } from 'node-eventstore-client';
+import { IAdapterStore } from '../adapter';
 
 export enum EventStoreSubscriptionType {
   Persistent,
@@ -43,14 +44,17 @@ export interface IEventConstructors {
 }
 
 export interface ExtendedCatchUpSubscription extends EventStoreCatchUpSubscription {
+  type: 'catch';
   isLive: boolean | undefined;
 }
 
 export interface ExtendedPersistentSubscription extends ESStorePersistentSub {
+  type: 'persistent';
   isLive?: boolean | undefined;
 }
 
 export interface ExtendedVolatileSubscription extends ESVolatileSubscription {
+  type: 'volatile';
   isLive?: boolean | undefined;
 }
 
@@ -58,4 +62,5 @@ export interface EventStoreOptionConfig {
   subscriptions: EventStoreSubscription[];
   eventHandlers: IEventConstructors;
   featureStreamName?: string;
+  store?: IAdapterStore;
 }

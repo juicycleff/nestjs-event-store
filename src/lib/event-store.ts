@@ -19,6 +19,7 @@ import {
   expectedVersion,
   createJsonEventData,
 } from 'node-eventstore-client';
+import { IAdapterStore } from './adapter';
 import {
   EventStoreOptionConfig,
   IEventConstructors,
@@ -41,10 +42,11 @@ import { NestjsEventStore } from './nestjs-event-store.class';
 export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleInit, IMessageSource {
   private logger = new Logger(this.constructor.name);
   private eventStore: NestjsEventStore;
+  private store: IAdapterStore;
   private eventHandlers: IEventConstructors;
   private subject$: Subject<IEvent>;
   private readonly featureStream?: string;
-  private catchupSubscriptions: ExtendedCatchUpSubscription[] = [];
+  private catchupSubscriptions: Array<Promise<ExtendedCatchUpSubscription>> = [];
   private catchupSubscriptionsCount: number;
 
   private persistentSubscriptions: ExtendedPersistentSubscription[] = [];
@@ -63,6 +65,7 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
 
     this.eventStore = eventStore;
     this.featureStream = esStreamConfig.featureStreamName;
+    this.store = esStreamConfig.store;
     this.addEventHandlers(esStreamConfig.eventHandlers);
     this.eventStore.connect(configService.options, configService.tcpEndpoint);
 
@@ -125,13 +128,17 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
     );
   }
 
-  subscribeToCatchUpSubscriptions(subscriptions: ESCatchUpSubscription[]) {
+  async subscribeToCatchUpSubscriptions(subscriptions: ESCatchUpSubscription[]) {
     this.catchupSubscriptionsCount = subscriptions.length;
-    this.catchupSubscriptions = subscriptions.map((subscription) => {
+    this.catchupSubscriptions = subscriptions.map(async (subscription) => {
+      let lcp = subscription.lastCheckpoint;
+      if (this.store) {
+        lcp = await this.store.read(this.store.storeKey);
+      }
       return this.subscribeToCatchupSubscription(
         subscription.stream,
         subscription.resolveLinkTos,
-        subscription.lastCheckpoint,
+        lcp,
       );
     });
   }
@@ -193,8 +200,9 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
       this.catchupSubscriptions.length === this.catchupSubscriptionsCount;
     return (
       initialized &&
-      this.catchupSubscriptions.every((subscription) => {
-        return !!subscription && subscription.isLive;
+      this.catchupSubscriptions.every(async (subscription) => {
+        const s = await subscription;
+        return !!s && s.isLive;
       })
     );
   }
@@ -272,6 +280,12 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
     const eventType = event.eventType || rawData.content.eventType;
     if (this.eventHandlers && this.eventHandlers[eventType]) {
       this.subject$.next(this.eventHandlers[event.eventType](...data));
+      if (this.store) {
+        // @ts-ignore
+        if (_subscription.type === 'catch') {
+          await this.store.write(this.store.storeKey, payload.event.eventNumber.toInt());
+        }
+      }
     } else {
       Logger.warn(`Event of type ${eventType} not handled`, this.constructor.name)
     }
