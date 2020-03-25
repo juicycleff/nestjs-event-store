@@ -29,10 +29,10 @@ import {
   ExtendedCatchUpSubscription,
   ExtendedVolatileSubscription,
   ExtendedPersistentSubscription,
-} from './contract/event-store-option.config';
+  ProvidersConstants,
+  EventStoreModuleOptions,
+} from './contract';
 import { NestjsEventStore } from './nestjs-event-store.class';
-import { ProvidersConstants } from './contract/nestjs-event-store.constant';
-import { IEventStoreConnectConfig } from './contract/event-store-connect-config.interface';
 
 /**
  * @class EventStore
@@ -55,7 +55,7 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
 
   constructor(
     @Inject(ProvidersConstants.EVENT_STORE_PROVIDER) eventStore: any,
-    @Inject(ProvidersConstants.EVENT_STORE_CONNECTION_CONFIG_PROVIDER) configService: IEventStoreConnectConfig,
+    @Inject(ProvidersConstants.EVENT_STORE_CONNECTION_CONFIG_PROVIDER) configService: EventStoreModuleOptions,
     @Inject(ProvidersConstants.EVENT_STORE_STREAM_CONFIG_PROVIDER) esStreamConfig: EventStoreOptionConfig,
     private readonly explorerService: ExplorerService,
     private readonly eventsBus: EventBus,
@@ -165,7 +165,7 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
           this.onDropped(sub as ExtendedCatchUpSubscription, reason, error),
       ) as ExtendedCatchUpSubscription;
     } catch (err) {
-      this.logger.error(err.message);
+      this.logger.error(err);
     }
   }
 
@@ -184,7 +184,7 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
       resolved.isLive = true;
       return resolved
     } catch (err) {
-      this.logger.error(err.message);
+      this.logger.error(err);
     }
   }
 
@@ -283,7 +283,7 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
     error: Error,
   ) {
     subscription.isLive = false;
-    this.logger.error(error);
+    this.logger.error('onDropped => ' + error);
   }
 
   onLiveProcessingStarted(subscription: ExtendedCatchUpSubscription) {

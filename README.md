@@ -31,11 +31,11 @@ Such as Volatile, CatchUp and Persistent subscriptions fairly easily.
 
 ```typescript
 import { Module } from '@nestjs/common';
-import { NestjsEventStoreModule } from '@juicycleff/nestjs-event-store';
+import { EventStoreModule } from '@juicycleff/nestjs-event-store';
 
 @Module({
   imports: [
-    NestjsEventStoreModule.forRoot({
+    EventStoreModule.register({
       tcpEndpoint: {
         host: process.env.ES_TCP_HOSTNAME || AppConfig.eventstore?.hostname,
         port: parseInt(process.env.ES_TCP_PORT, 10) || AppConfig.eventstore?.tcpPort,
@@ -52,13 +52,29 @@ import { NestjsEventStoreModule } from '@juicycleff/nestjs-event-store';
 export class AppModule {}
 ```
 
+##### Setup async root app module
+```typescript
+import { Module } from '@nestjs/common';
+import { EventStoreModule } from '@juicycleff/nestjs-event-store';
+import { EventStoreConfigService } from './eventstore-config.service';
+
+@Module({
+  imports: [
+    EventStoreModule.registerAsync({
+      useClass: EventStoreConfigService
+    }),
+  ]
+})
+export class AppModule {}
+```
+
 ## Setup module
 *Note* `featureStreamName` field is not important if you're subscription type is persistent'
 
 ```typescript
 import { Module } from '@nestjs/common';
 import { CommandBus, CqrsModule, EventBus } from '@nestjs/cqrs';
-import { NestjsEventStoreModule, EventStore, EventStoreSubscriptionType } from '@juicycleff/nestjs-event-store';
+import { EventStoreModule, EventStore, EventStoreSubscriptionType } from '@juicycleff/nestjs-event-store';
 
 import {
   UserCommandHandlers,
@@ -71,7 +87,7 @@ import { UserSagas } from './sagas';
 @Module({
   imports: [
     CqrsModule,
-    NestjsEventStoreModule.forFeature({
+    EventStoreModule.forFeature({
       featureStreamName: '$ce-user',
       subscriptions: [
         {

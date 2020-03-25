@@ -1,10 +1,12 @@
-import { DynamicModule, Global, Module } from '@nestjs/common';
-import { ProvidersConstants } from './contract/nestjs-event-store.constant';
+import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
 import {
   EventStoreModuleAsyncOptions,
-  EventStoreModuleOptions
-} from './contract/event-store-connect-config.interface';
-import { eventStoreProviders } from './providers/nestjs-event-store.provider';
+  EventStoreModuleOptions,
+  EventStoreOptionsFactory,
+  NEST_EVENTSTORE_OPTION,
+  ProvidersConstants
+} from './contract';
+import { eventStoreProviders } from './providers';
 import { CqrsModule } from '@nestjs/cqrs';
 
 @Global()
@@ -25,9 +27,9 @@ import { CqrsModule } from '@nestjs/cqrs';
     },
   ],
 })
-export class NestjsEventStoreCoreModule {
+export class EventStoreCoreModule {
 
-  static forRoot(option: EventStoreModuleOptions): DynamicModule {
+  static register(option: EventStoreModuleOptions): DynamicModule {
     const configProv = {
       provide: ProvidersConstants.EVENT_STORE_CONNECTION_CONFIG_PROVIDER,
       useValue: {
@@ -35,23 +37,70 @@ export class NestjsEventStoreCoreModule {
       },
     };
     return {
-      module: NestjsEventStoreCoreModule,
+      module: EventStoreCoreModule,
       providers: [configProv],
       exports: [configProv],
     };
   }
 
-  static forRootAsync(option: EventStoreModuleAsyncOptions): DynamicModule {
-    const configProv = {
+  static registerAsync(options: EventStoreModuleAsyncOptions): DynamicModule {
+    const configProv: Provider = {
       provide: ProvidersConstants.EVENT_STORE_CONNECTION_CONFIG_PROVIDER,
-      useValue: {
-        ...option,
+      useFactory: async (esOptions: EventStoreModuleOptions) => {
+        return {
+          ...esOptions,
+        }
       },
+      inject: [NEST_EVENTSTORE_OPTION],
     };
+
+    const asyncProviders = this.createAsyncProviders(options);
+
     return {
-      module: NestjsEventStoreCoreModule,
-      providers: [configProv],
+      module: EventStoreCoreModule,
+      imports: options.imports,
+      providers: [
+        ...asyncProviders,
+        configProv
+      ],
       exports: [configProv],
+    };
+  }
+
+  private static createAsyncProviders(
+    options: EventStoreModuleAsyncOptions,
+  ): Provider[] {
+    if (options.useExisting || options.useFactory) {
+      return [this.createAsyncOptionsProvider(options)];
+    }
+    const useClass = options.useClass as Type<EventStoreOptionsFactory>;
+    return [
+      this.createAsyncOptionsProvider(options),
+      {
+        provide: useClass,
+        useClass,
+      },
+    ];
+  }
+
+  private static createAsyncOptionsProvider(
+    options: EventStoreModuleAsyncOptions,
+  ): Provider {
+    if (options.useFactory) {
+      return {
+        provide: NEST_EVENTSTORE_OPTION,
+        useFactory: options.useFactory,
+        inject: options.inject || [],
+      };
+    }
+    const inject = [
+      (options.useClass || options.useExisting) as Type<EventStoreOptionsFactory>,
+    ];
+    return {
+      provide: NEST_EVENTSTORE_OPTION,
+      useFactory: async (optionsFactory: EventStoreOptionsFactory) =>
+        await optionsFactory.createEventStoreOptions(options.name),
+      inject,
     };
   }
 }

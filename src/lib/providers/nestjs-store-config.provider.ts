@@ -1,12 +1,12 @@
-import { IEventStoreConnectConfig } from '../contract/event-store-connect-config.interface';
+import { EventStoreModuleOptions } from '../contract';
 
 export class NestStoreConfigProvider {
-  private readonly esConfig: IEventStoreConnectConfig;
-  constructor(option: IEventStoreConnectConfig) {
+  private readonly esConfig: EventStoreModuleOptions;
+  constructor(option: EventStoreModuleOptions) {
     this.esConfig = option;
   }
 
-  get eventSourceConfig(): IEventStoreConnectConfig {
+  get eventSourceConfig(): EventStoreModuleOptions {
     return this.esConfig;
   }
 }

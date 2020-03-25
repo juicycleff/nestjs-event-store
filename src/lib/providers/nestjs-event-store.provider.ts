@@ -1,4 +1,4 @@
-import { ProvidersConstants } from '../contract/nestjs-event-store.constant';
+import { EVENT_STORE_CONFIG, ProvidersConstants } from '..';
 import { NestjsEventStore } from '../nestjs-event-store.class';
 
 export const eventStoreProviders = [
@@ -9,6 +9,6 @@ export const eventStoreProviders = [
         return new NestjsEventStore();
       }
     },
-    inject: ['EVENT_STORE_CONFIG'],
+    inject: [EVENT_STORE_CONFIG],
   },
 ];
