@@ -26,7 +26,7 @@ $ yarn install @juicycleff/nestjs-event-store
 This module aims to bridge the gap between NestJs and [Event Store](https://eventstore.org). It supports all different subscription strategies of supported by Event Store.
 Such as Volatile, CatchUp and Persistent subscriptions fairly easily. 
 
-### Setup from versions from `v2.0.0`
+### Setup from versions from `v3.0.0`
 ##### Setup root app module
 
 ```typescript
