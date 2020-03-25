@@ -43,6 +43,11 @@ import { EventStoreModule } from '@juicycleff/nestjs-event-store';
         port: parseInt(process.env.ES_TCP_PORT, 10) || AppConfig.eventstore?.tcpPort,
       },
       options: {
+        maxRetries: 1000, // Optional
+        maxReconnections: 1000,  // Optional
+        reconnectionDelay: 1000,  // Optional
+        heartbeatInterval: 1000,  // Optional
+        heartbeatTimeout: 1000,  // Optional
         defaultUserCredentials: {
           password: AppConfig.eventstore?.tcpPassword,
           username: AppConfig.eventstore?.tcpUsername,
