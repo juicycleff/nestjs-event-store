@@ -23,8 +23,8 @@ $ yarn install @juicycleff/nestjs-event-store
 ```
 
 ## Description
-This module aims to bridge the gap between NestJs and [Event Store](https://eventstore.org). It supports all different subscription strategies of supported by Event Store.
-Such as Volatile, CatchUp and Persistent subscriptions fairly easily. There is support for a storage adapter interface for storing catchup events type last checkpoint position, so
+This module aims to bridge the gap between NestJs and [Event Store](https://eventstore.org). It supports all different subscription strategies of in EventStore.Org,
+such as Volatile, CatchUp and Persistent subscriptions fairly easily. There is support for a storage adapter interface for storing catchup events type last checkpoint position, so
 the checkpoint can be read on start up; The adapter interface is very slim and easy and can be assigned preferably using the `EventStoreModule.registerFeatureAsync` method.
 Adapter data store examples coming soon.
 
