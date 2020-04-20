@@ -280,11 +280,8 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
     const eventType = event.eventType || rawData.content.eventType;
     if (this.eventHandlers && this.eventHandlers[eventType]) {
       this.subject$.next(this.eventHandlers[event.eventType](...data));
-      if (this.store) {
-        // @ts-ignore
-        if (_subscription.type === 'catch') {
-          await this.store.write(this.store.storeKey, payload.event.eventNumber.toInt());
-        }
+      if (this.store && _subscription.constructor.name === 'EventStoreStreamCatchUpSubscription') {
+        await this.store.write(this.store.storeKey, payload.event.eventNumber.toInt());
       }
     } else {
       Logger.warn(`Event of type ${eventType} not handled`, this.constructor.name)

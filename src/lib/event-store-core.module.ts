@@ -4,7 +4,8 @@ import {
   EventStoreFeatureAsyncOptions, EventStoreFeatureOptionsFactory,
   EventStoreModuleAsyncOptions,
   EventStoreModuleOptions, EventStoreOptionConfig,
-  EventStoreOptionsFactory, NEST_EVENTSTORE_FEATURE_OPTION,
+  EventStoreOptionsFactory,
+  NEST_EVENTSTORE_FEATURE_OPTION,
   NEST_EVENTSTORE_OPTION,
   ProvidersConstants
 } from './contract';
@@ -107,7 +108,7 @@ export class EventStoreCoreModule {
           ...config,
         }
       },
-      inject: [NEST_EVENTSTORE_OPTION],
+      inject: [NEST_EVENTSTORE_FEATURE_OPTION],
     };
 
     const asyncProviders = this.createFeatureAsyncProviders(options);

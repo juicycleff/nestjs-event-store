@@ -34,7 +34,7 @@ export class NestjsEventStore {
 
       return this;
     } catch (e) {
-      this.logger.error(e.message);
+      this.logger.error(e);
       throw new Error(e);
     }
   }
