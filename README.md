@@ -28,6 +28,17 @@ such as Volatile, CatchUp and Persistent subscriptions fairly easily. There is s
 the checkpoint can be read on start up; The adapter interface is very slim and easy and can be assigned preferably using the `EventStoreModule.registerFeatureAsync` method.
 Adapter data store examples coming soon.
 
+Note: if your featureStreamName is `'$ce-user'`, then you should name your your domain argument should be `user` without `$ce`, for example.
+
+```typescript
+export class UserCreatedEvent implements IEvent {
+    constructor(
+        public readonly user: any // This what im talking about.
+    )  { }
+}
+```
+The way this works is we group the event based the first argument in the constructor and this argument name must match the feature set name, I'm sorry you can't pass you your own unique name at the moment, but I will add support for it
+
 ### Setup from versions from `v3.0.0`
 ##### Setup root app module
 
