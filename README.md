@@ -37,7 +37,7 @@ export class UserCreatedEvent implements IEvent {
     )  { }
 }
 ```
-The way this works is we group the event based the first argument in the constructor and this argument name must match the feature set name, I'm sorry you can't pass you your own unique name at the moment, but I will add support for it
+The way this works is we group the event based the first argument in the constructor name and this argument name must be a substring of featureStreamName. I'm sorry you can't pass you your own unique name at the moment, but I will add support for it
 
 ### Setup from versions from `v3.0.0`
 ##### Setup root app module
