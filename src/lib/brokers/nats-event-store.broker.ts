@@ -1,26 +1,31 @@
 import { Logger } from '@nestjs/common';
 import assert from 'assert';
 import uuid from 'uuid';
-import { EventStoreNodeConnection, ConnectionSettings, TcpEndPoint, createConnection } from 'node-eventstore-client';
+import { ClientOpts, connect, Stan } from 'node-nats-streaming';
+import { BrokerTypes } from '../contract';
 
 /**
- * @description Event store setup from eventstore.org
+ * @description Event store setup from NATS
  */
-export class EventStoreBroker {
+export class NatsEventStoreBroker {
   [x: string]: any;
   private logger: Logger = new Logger(this.constructor.name);
-  private connection: EventStoreNodeConnection;
+  private client: Stan;
   public isConnected: boolean;
+  type: BrokerTypes;
 
   constructor() {
-    this.type = 'event-store';
+    this.type = 'nats';
+    this.clientId = uuid.v4();
   }
 
-  connect(options: ConnectionSettings, endpoint: TcpEndPoint) {
-
+  connect(clusterId: string, clientId: string, options: ClientOpts) {
     try {
-      this.connection = createConnection(options, endpoint);
-      this.connection.connect();
+      if (clientId) {
+        this.clientId = clientId;
+      }
+
+      this.connection = connect(clusterId, this.clientId, options);
 
       this.connection.on('connected', () => {
         this.isConnected = true;
@@ -29,7 +34,7 @@ export class EventStoreBroker {
       this.connection.on('closed', () => {
         this.isConnected = false;
         this.logger.error('EventStore closed!');
-        this.connect(options, endpoint);
+        this.connect(clusterId, this.clientId, options);
       });
 
       return this;
@@ -39,8 +44,8 @@ export class EventStoreBroker {
     }
   }
 
-  getConnection(): EventStoreNodeConnection {
-    return this.connection;
+  getClient(): Stan {
+    return this.client;
   }
 
   newEvent(name, payload) {
@@ -52,17 +57,19 @@ export class EventStoreBroker {
     assert(data);
 
     const event: {
-      eventId: string | any,
-      eventType?: string | any,
-      data?: any,
-      metadata?: any,
+      eventId: string | any;
+      eventType?: string | any;
+      data?: any;
+      metadata?: any;
     } = {
       eventId: eventId || uuid.v4(),
       eventType,
       data
     };
 
-    if (metadata !== undefined) { event.metadata = metadata; }
+    if (metadata !== undefined) {
+      event.metadata = metadata;
+    }
     return event;
   }
 
@@ -70,7 +77,7 @@ export class EventStoreBroker {
    * Close event store connection
    */
   close() {
-    this.connection.close();
+    this.client.close();
     return this;
   }
 }

@@ -1,43 +1,44 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { EventStore } from './event-store';
 import {
   EventStoreModuleOptions,
   EventStoreModuleAsyncOptions,
-  EventStoreOptionConfig, EventStoreFeatureAsyncOptions
+  EventStoreOptionConfig,
+  EventStoreFeatureAsyncOptions
 } from './contract';
 import { EventStoreCoreModule } from './event-store-core.module';
 import { CqrsModule } from '@nestjs/cqrs';
 
 @Module({
-  imports: [CqrsModule],
+  imports: [CqrsModule]
 })
 export class EventStoreModule {
-
   static register(option: EventStoreModuleOptions): DynamicModule {
     return {
       module: EventStoreModule,
-      imports: [EventStoreCoreModule.register(option)],
+      imports: [EventStoreCoreModule.register(option)]
     };
   }
 
   static registerAsync(option: EventStoreModuleAsyncOptions): DynamicModule {
     return {
       module: EventStoreModule,
-      imports: [EventStoreCoreModule.registerAsync(option)],
+      imports: [EventStoreCoreModule.registerAsync(option)]
     };
   }
 
   static registerFeature(config: EventStoreOptionConfig): DynamicModule {
     return {
       module: EventStoreModule,
-      imports: [EventStoreCoreModule.registerFeature(config)],
+      imports: [EventStoreCoreModule.registerFeature(config)]
     };
   }
 
-  static registerFeatureAsync(options: EventStoreFeatureAsyncOptions): DynamicModule {
+  static registerFeatureAsync(
+    options: EventStoreFeatureAsyncOptions
+  ): DynamicModule {
     return {
       module: EventStoreModule,
-      imports: [EventStoreCoreModule.registerFeatureAsync(options)],
+      imports: [EventStoreCoreModule.registerFeatureAsync(options)]
     };
   }
 }

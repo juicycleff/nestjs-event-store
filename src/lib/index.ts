@@ -3,4 +3,4 @@ import 'reflect-metadata';
 export * from './event-store.module';
 export * from './contract';
 export * from './adapter';
-export * from './event-store';
+export * from './stores/event-store';

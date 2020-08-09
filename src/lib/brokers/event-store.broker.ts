@@ -1,34 +1,40 @@
 import { Logger } from '@nestjs/common';
 import assert from 'assert';
 import uuid from 'uuid';
-import { EventStoreNodeConnection, ConnectionSettings, TcpEndPoint, createConnection } from 'node-eventstore-client';
+import {
+  EventStoreNodeConnection,
+  ConnectionSettings,
+  TcpEndPoint,
+  createConnection
+} from 'node-eventstore-client';
+import { BrokerTypes } from '../contract';
 
 /**
  * @description Event store setup from eventstore.org
  */
-export class EventStoreBrokerClass {
+export class EventStoreBroker {
   [x: string]: any;
   private logger: Logger = new Logger(this.constructor.name);
-  private connection: EventStoreNodeConnection;
+  private client: EventStoreNodeConnection;
   public isConnected: boolean;
+  type: BrokerTypes;
 
   constructor() {
     this.type = 'event-store';
   }
 
   connect(options: ConnectionSettings, endpoint: TcpEndPoint) {
-
     try {
-      this.connection = createConnection(options, endpoint);
-      this.connection.connect();
+      this.client = createConnection(options, endpoint);
+      this.client.connect();
 
-      this.connection.on('connected', () => {
+      this.client.on('connected', () => {
         this.isConnected = true;
-        this.logger.log('EventStoreClass connected!');
+        this.logger.log('EventStore connected!');
       });
-      this.connection.on('closed', () => {
+      this.client.on('closed', () => {
         this.isConnected = false;
-        this.logger.error('EventStoreClass closed!');
+        this.logger.error('EventStore closed!');
         this.connect(options, endpoint);
       });
 
@@ -39,8 +45,8 @@ export class EventStoreBrokerClass {
     }
   }
 
-  getConnection(): EventStoreNodeConnection {
-    return this.connection;
+  getClient(): EventStoreNodeConnection {
+    return this.client;
   }
 
   newEvent(name, payload) {
@@ -52,25 +58,27 @@ export class EventStoreBrokerClass {
     assert(data);
 
     const event: {
-      eventId: string | any,
-      eventType?: string | any,
-      data?: any,
-      metadata?: any,
+      eventId: string | any;
+      eventType?: string | any;
+      data?: any;
+      metadata?: any;
     } = {
       eventId: eventId || uuid.v4(),
       eventType,
       data
     };
 
-    if (metadata !== undefined) { event.metadata = metadata; }
+    if (metadata !== undefined) {
+      event.metadata = metadata;
+    }
     return event;
   }
 
   /**
-   * Close event store connection
+   * Close event store client
    */
   close() {
-    this.connection.close();
+    this.client.close();
     return this;
   }
 }

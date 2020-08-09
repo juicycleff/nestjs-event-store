@@ -1,64 +1,77 @@
 import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
 import { ExplorerService } from '@nestjs/cqrs/dist/services/explorer.service';
 import {
-  EventStoreFeatureAsyncOptions, EventStoreFeatureOptionsFactory,
+  EventStoreFeatureAsyncOptions,
+  EventStoreFeatureOptionsFactory,
   EventStoreModuleAsyncOptions,
-  EventStoreModuleOptions, EventStoreOptionConfig,
+  EventStoreModuleOptions,
+  EventStoreOptionConfig,
   EventStoreOptionsFactory,
   NEST_EVENTSTORE_FEATURE_OPTION,
   NEST_EVENTSTORE_OPTION,
   ProvidersConstants
 } from './contract';
-import { EventStore } from './event-store';
-import { NestjsEventStore } from './nestjs-event-store.class';
+import { EventStore } from './stores/event-store';
+import { EventStoreBroker, NatsEventStoreBroker } from './brokers';
 import { CqrsModule } from '@nestjs/cqrs';
 
 @Global()
 @Module({
-  imports: [CqrsModule],
+  imports: [CqrsModule]
 })
 export class EventStoreCoreModule {
-
   static register(option: EventStoreModuleOptions): DynamicModule {
-
     const eventStoreProviders = {
       provide: ProvidersConstants.EVENT_STORE_PROVIDER,
       useFactory: (): any => {
-        return new NestjsEventStore();
-      },
+        switch (option.type) {
+          case 'event-store':
+            return new EventStoreBroker();
+          case 'nats':
+            return new NatsEventStoreBroker();
+          default:
+            throw new Error('event store broker type missing');
+        }
+      }
     };
 
     const configProv = {
       provide: ProvidersConstants.EVENT_STORE_CONNECTION_CONFIG_PROVIDER,
       useValue: {
-        ...option,
-      },
+        ...option
+      }
     };
 
     return {
       module: EventStoreCoreModule,
       providers: [eventStoreProviders, configProv],
-      exports: [eventStoreProviders, configProv],
+      exports: [eventStoreProviders, configProv]
     };
   }
 
   static registerAsync(options: EventStoreModuleAsyncOptions): DynamicModule {
-
     const eventStoreProviders = {
       provide: ProvidersConstants.EVENT_STORE_PROVIDER,
       useFactory: (): any => {
-        return new NestjsEventStore();
-      },
+        switch (options.type) {
+          case 'event-store':
+            return new EventStoreBroker();
+          case 'nats':
+            return new NatsEventStoreBroker();
+          default:
+            throw new Error('event store broker type missing');
+        }
+      }
     };
 
     const configProv: Provider = {
       provide: ProvidersConstants.EVENT_STORE_CONNECTION_CONFIG_PROVIDER,
       useFactory: async (esOptions: EventStoreModuleOptions) => {
         return {
-          ...esOptions,
-        }
+          ...esOptions
+        };
       },
-      inject: [NEST_EVENTSTORE_OPTION],
+      inject: [NEST_EVENTSTORE_OPTION]
     };
 
     const asyncProviders = this.createAsyncProviders(options);
@@ -66,17 +79,12 @@ export class EventStoreCoreModule {
     return {
       module: EventStoreCoreModule,
       imports: options.imports,
-      providers: [
-        ...asyncProviders,
-        eventStoreProviders,
-        configProv
-      ],
-      exports: [eventStoreProviders, configProv],
+      providers: [...asyncProviders, eventStoreProviders, configProv],
+      exports: [eventStoreProviders, configProv]
     };
   }
 
   static registerFeature(config: EventStoreOptionConfig): DynamicModule {
-
     if (config === undefined || config === null) {
       throw new Error('Config missing');
     }
@@ -88,48 +96,39 @@ export class EventStoreCoreModule {
         {
           provide: ProvidersConstants.EVENT_STORE_STREAM_CONFIG_PROVIDER,
           useValue: {
-            ...config,
-          },
+            ...config
+          }
         },
-        EventStore,
+        EventStore
       ],
-      exports: [
-        EventStore,
-        ExplorerService,
-      ],
+      exports: [EventStore, ExplorerService]
     };
   }
 
-  static registerFeatureAsync(options: EventStoreFeatureAsyncOptions): DynamicModule {
+  static registerFeatureAsync(
+    options: EventStoreFeatureAsyncOptions
+  ): DynamicModule {
     const configProv: Provider = {
       provide: ProvidersConstants.EVENT_STORE_STREAM_CONFIG_PROVIDER,
       useFactory: async (config: EventStoreOptionConfig) => {
         return {
-          ...config,
-        }
+          ...config
+        };
       },
-      inject: [NEST_EVENTSTORE_FEATURE_OPTION],
+      inject: [NEST_EVENTSTORE_FEATURE_OPTION]
     };
 
     const asyncProviders = this.createFeatureAsyncProviders(options);
 
     return {
       module: EventStoreCoreModule,
-      providers: [
-        ...asyncProviders,
-        ExplorerService,
-        configProv,
-        EventStore,
-      ],
-      exports: [
-        EventStore,
-        ExplorerService,
-      ],
+      providers: [...asyncProviders, ExplorerService, configProv, EventStore],
+      exports: [EventStore, ExplorerService]
     };
   }
 
   private static createAsyncProviders(
-    options: EventStoreModuleAsyncOptions,
+    options: EventStoreModuleAsyncOptions
   ): Provider[] {
     if (options.useExisting || options.useFactory) {
       return [this.createAsyncOptionsProvider(options)];
@@ -139,34 +138,36 @@ export class EventStoreCoreModule {
       this.createAsyncOptionsProvider(options),
       {
         provide: useClass,
-        useClass,
-      },
+        useClass
+      }
     ];
   }
 
   private static createAsyncOptionsProvider(
-    options: EventStoreModuleAsyncOptions,
+    options: EventStoreModuleAsyncOptions
   ): Provider {
     if (options.useFactory) {
       return {
         provide: NEST_EVENTSTORE_OPTION,
         useFactory: options.useFactory,
-        inject: options.inject || [],
+        inject: options.inject || []
       };
     }
     const inject = [
-      (options.useClass || options.useExisting) as Type<EventStoreOptionsFactory>,
+      (options.useClass || options.useExisting) as Type<
+        EventStoreOptionsFactory
+      >
     ];
     return {
       provide: NEST_EVENTSTORE_OPTION,
       useFactory: async (optionsFactory: EventStoreOptionsFactory) =>
         await optionsFactory.createEventStoreOptions(options.name),
-      inject,
+      inject
     };
   }
 
   private static createFeatureAsyncProviders(
-    options: EventStoreFeatureAsyncOptions,
+    options: EventStoreFeatureAsyncOptions
   ): Provider[] {
     if (options.useExisting || options.useFactory) {
       return [this.createFeatureAsyncOptionsProvider(options)];
@@ -176,29 +177,31 @@ export class EventStoreCoreModule {
       this.createFeatureAsyncOptionsProvider(options),
       {
         provide: useClass,
-        useClass,
-      },
+        useClass
+      }
     ];
   }
 
   private static createFeatureAsyncOptionsProvider(
-    options: EventStoreFeatureAsyncOptions,
+    options: EventStoreFeatureAsyncOptions
   ): Provider {
     if (options.useFactory) {
       return {
         provide: NEST_EVENTSTORE_FEATURE_OPTION,
         useFactory: options.useFactory,
-        inject: options.inject || [],
+        inject: options.inject || []
       };
     }
     const inject = [
-      (options.useClass || options.useExisting) as Type<EventStoreFeatureOptionsFactory>,
+      (options.useClass || options.useExisting) as Type<
+        EventStoreFeatureOptionsFactory
+      >
     ];
     return {
       provide: NEST_EVENTSTORE_FEATURE_OPTION,
       useFactory: async (optionsFactory: EventStoreFeatureOptionsFactory) =>
         await optionsFactory.createFeatureOptions(options.name),
-      inject,
+      inject
     };
   }
 }
