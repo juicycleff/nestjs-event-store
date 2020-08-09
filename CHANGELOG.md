@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.0.16](https://github.com/juicycleff/nestjs-event-store/compare/v3.0.14...v3.0.16) (2020-08-09)
+
+
+
 ### [3.0.14](https://github.com/juicycleff/nestjs-event-store/compare/v3.0.12...v3.0.14) (2020-08-09)
 
 

@@ -59,6 +59,8 @@ export class NatsEventStore
     this.eventStore = eventStore;
     this.featureStream = esStreamConfig.featureStreamName;
     this.addEventHandlers(esStreamConfig.eventHandlers);
+    console.log(esStreamConfig)
+    console.log(configService)
 
     if (configService.type === 'nats') {
       this.eventStore.connect(
