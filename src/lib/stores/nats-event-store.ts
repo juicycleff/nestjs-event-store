@@ -69,7 +69,7 @@ export class NatsEventStore
         configService.options
       );
     } else {
-      throw new Error('Event store type is not supported');
+      throw new Error('Event store type is not supported  - (nats-event-store.ts)');
     }
 
     if (esStreamConfig.type === 'nats') {
@@ -89,7 +89,7 @@ export class NatsEventStore
         volatileSubscriptions as ESVolatileSubscription[]
       );
     } else {
-      throw new Error('Event store type is not supported');
+      throw new Error('Event store type is not supported for feature - nats-event-store.ts');
     }
   }
 

@@ -83,7 +83,7 @@ export class EventStore
     if (esStreamConfig.type === 'event-store') {
       this.store = esStreamConfig.store;
     } else {
-      throw new Error('Event store type is not supported');
+      throw new Error('Event store type is not supported - (event-tore.ts)');
     }
     this.addEventHandlers(esStreamConfig.eventHandlers);
     if (configService.type === 'event-store') {
@@ -111,7 +111,7 @@ export class EventStore
         volatileSubscriptions as ESVolatileSubscription[]
       );
     } else {
-      throw new Error('Event store type is not supported');
+      throw new Error('Event store type is not supported for feature - (event-tore.ts)');
     }
   }
 

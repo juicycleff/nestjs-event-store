@@ -11,7 +11,7 @@ import {
   NEST_EVENTSTORE_OPTION,
   ProvidersConstants
 } from './contract';
-import { EventStore } from './stores/event-store';
+import { EventStore, NatsEventStore } from './stores';
 import { EventStoreBroker, NatsEventStoreBroker } from './brokers';
 import { CqrsModule } from '@nestjs/cqrs';
 
@@ -89,6 +89,8 @@ export class EventStoreCoreModule {
       throw new Error('Config missing');
     }
 
+    const CurrentStore = config.type === 'event-store' ? EventStore : NatsEventStore;
+
     return {
       module: EventStoreCoreModule,
       providers: [
@@ -99,9 +101,9 @@ export class EventStoreCoreModule {
             ...config
           }
         },
-        EventStore
+        CurrentStore
       ],
-      exports: [EventStore, ExplorerService]
+      exports: [CurrentStore, ExplorerService]
     };
   }
 
@@ -119,11 +121,12 @@ export class EventStoreCoreModule {
     };
 
     const asyncProviders = this.createFeatureAsyncProviders(options);
+    const CurrentStore = options.type === 'event-store' ? EventStore : NatsEventStore;
 
     return {
       module: EventStoreCoreModule,
-      providers: [...asyncProviders, ExplorerService, configProv, EventStore],
-      exports: [EventStore, ExplorerService]
+      providers: [...asyncProviders, ExplorerService, configProv, CurrentStore],
+      exports: [CurrentStore, ExplorerService]
     };
   }
 
