@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import assert from 'assert';
-import uuid from 'uuid';
+import * as uuid from 'uuid';
 import {
   EventStoreNodeConnection,
   ConnectionSettings,

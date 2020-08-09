@@ -25,9 +25,10 @@ export class NatsEventStoreBroker {
         this.clientId = clientId;
       }
 
+      console.log(clusterId, this.clientId, options);
       this.connection = connect(clusterId, this.clientId, options);
 
-      this.connection.on('connected', () => {
+      this.connection.on('connect', () => {
         this.isConnected = true;
         this.logger.log('EventStore connected!');
       });

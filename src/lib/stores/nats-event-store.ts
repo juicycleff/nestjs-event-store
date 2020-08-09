@@ -59,8 +59,6 @@ export class NatsEventStore
     this.eventStore = eventStore;
     this.featureStream = esStreamConfig.featureStreamName;
     this.addEventHandlers(esStreamConfig.eventHandlers);
-    console.log(esStreamConfig)
-    console.log(configService)
 
     if (configService.type === 'nats') {
       this.eventStore.connect(
@@ -218,6 +216,8 @@ export class NatsEventStore
       this.logger.log(`
        Connecting to persistent subscription ${durableName} on stream ${stream}!
       `);
+      console.log(this.eventStore.getClient())
+      console.log(this.eventStore)
 
       const opts = this.eventStore.getClient().subscriptionOptions();
       opts.setDurableName(durableName);
