@@ -19,7 +19,8 @@ NestJs Event Store
 ## Installation
 
 ```bash
-$ yarn install @juicycleff/nestjs-event-store
+$ yarn add @juicycleff/nestjs-event-store
+$ yarn add node-nats-streaming node-eventstore-client
 ```
 
 ## Description
