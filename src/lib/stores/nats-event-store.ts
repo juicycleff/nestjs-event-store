@@ -27,7 +27,7 @@ import {
   EventStoreModuleOptions
 } from '../contract';
 import { NatsEventStoreBroker } from '../brokers';
-import { SubscriptionOptions } from 'node-nats-streaming';
+import { Message, SubscriptionOptions } from 'node-nats-streaming';
 
 /**
  * @class EventStore
@@ -99,7 +99,7 @@ export class NatsEventStore
     }
   }
 
-  async publish(event: IEvent, stream?: string) {
+  async publish(event: IEvent & {handlerType?: string}, stream?: string) {
     if (event === undefined) {
       return;
     }
@@ -107,8 +107,7 @@ export class NatsEventStore
       return;
     }
 
-    // tslint:disable-next-line:no-console
-    console.log('stream', stream);
+    event.handlerType = event?.constructor?.name;
     const payload = Buffer.from(JSON.stringify(event));
 
     const streamId = this.getStreamId(stream ? stream : this.featureStream);
@@ -183,7 +182,8 @@ export class NatsEventStore
           this.configService.groupId,
           opts
         )) as ExtendedNatsVolatileSubscription;
-      resolved.on('message', this.handleCallback);
+      resolved.on('message', (msg) => this.onEvent(msg));
+      resolved.on('error', (err) => this.onDropped(err));
       this.logger.log('Volatile processing of EventStore events started!');
       resolved.isLive = true;
       return resolved;
@@ -250,9 +250,6 @@ export class NatsEventStore
         return;
       }
 
-      console.log('stream => ', stream);
-      console.log('opts => ', opts);
-
       const resolved = (await this.eventStore
         .getClient()
         .subscribe(
@@ -270,32 +267,20 @@ export class NatsEventStore
     }
   }
 
-  private async handleCallback(err, msg) {
-    // tslint:disable-next-line:no-console
-    this.logger.error(err);
-    // tslint:disable-next-line:no-console
-    this.logger.log(msg);
-    if (err) {
-      this.onDropped(err);
-    } else {
-      await this.onEvent(msg);
-    }
-  }
-
-  async onEvent(payload) {
-    // tslint:disable-next-line:no-console
-    console.log(payload);
-    const handler = this.eventHandlers[payload.subject];
+  async onEvent(payload: Message) {
+    const data: any & {handlerType?: string} = JSON.stringify(payload.getRawData().toString());
+    console.log(data);
+    const handlerType = data.handlerType;
+    delete data.handlerType;
+    const handler = this.eventHandlers[handlerType];
     if (!handler) {
       this.logger.error('Received event that could not be handled!');
       return;
     }
 
-    const data = payload.data;
-
-    const eventType = payload.subject;
-    if (this.eventHandlers && this.eventHandlers[eventType]) {
-      this.subject$.next(this.eventHandlers[payload.subject](...data));
+    const eventType = payload.getSubject();
+    if (this.eventHandlers && this.eventHandlers[handlerType]) {
+      this.subject$.next(this.eventHandlers[handlerType](...data));
     } else {
       Logger.warn(
         `Event of type ${eventType} not handled`,
@@ -306,7 +291,6 @@ export class NatsEventStore
 
   onDropped(error) {
     // subscription.isLive = false;
-    this.logger.error('onDropped => ' + error);
     this.logger.error('onDropped => ' + error.message);
   }
 
