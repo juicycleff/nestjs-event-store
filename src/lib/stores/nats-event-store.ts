@@ -135,8 +135,10 @@ export class NatsEventStore
         return await this.subscribeToPersistentSubscription(
           this.getStreamId(subscription.stream),
           subscription.durableName,
+          subscription?.startAt,
           subscription.maxInflight,
-          subscription?.startAt
+          subscription?.ackWait,
+          subscription?.manualAcks,
         );
       })
     );
@@ -146,11 +148,17 @@ export class NatsEventStore
     subscriptions: ESVolatileSubscription[]
   ) {
     this.volatileSubscriptionsCount = subscriptions.length;
-    /* this.volatileSubscriptions = await Promise.all(
+    this.volatileSubscriptions = await Promise.all(
       subscriptions.map(async (subscription) => {
-        return await this.subscribeToVolatileSubscription(subscription.stream, subscription.resolveLinkTos);
+        return await this.subscribeToVolatileSubscription(
+          this.getStreamId(subscription.stream),
+          subscription.startAt,
+          subscription.maxInflight,
+          subscription?.ackWait,
+          subscription?.manualAcks,
+        );
       })
-    ); */
+    );
   }
 
   async subscribeToVolatileSubscription(
@@ -268,8 +276,7 @@ export class NatsEventStore
   }
 
   async onEvent(payload: Message) {
-    const data: any & {handlerType?: string} = JSON.stringify(payload.getRawData().toString());
-    console.log(data);
+    const data: any & {handlerType?: string} = JSON.parse(payload.getRawData().toString());
     const handlerType = data.handlerType;
     delete data.handlerType;
     const handler = this.eventHandlers[handlerType];

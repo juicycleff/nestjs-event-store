@@ -3,7 +3,7 @@ NestJs Event Store
 </h1>
   
 <p align="center">
-  NestJS CQRS module for EventStore.org. It requires @nestjs/cqrs.
+  NestJS CQRS module with support EventStore.org and NATS Streaming. It requires @nestjs/cqrs.
 </p>
     <p align="center">
 </p>
