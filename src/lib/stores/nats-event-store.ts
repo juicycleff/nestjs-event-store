@@ -15,7 +15,6 @@ import {
 } from '@nestjs/cqrs';
 import { ExplorerService } from '@nestjs/cqrs/dist/services/explorer.service';
 import { Subject } from 'rxjs';
-import { v4 } from 'uuid';
 import {
   EventStoreOptionConfig,
   IEventConstructors,
@@ -125,7 +124,7 @@ export class NatsEventStore
     this.persistentSubscriptions = await Promise.all(
       subscriptions.map(async subscription => {
         return await this.subscribeToPersistentSubscription(
-          subscription.stream,
+          this.getStreamId(subscription.stream),
           subscription.durableName,
           subscription.maxInflight,
           subscription?.startAt
