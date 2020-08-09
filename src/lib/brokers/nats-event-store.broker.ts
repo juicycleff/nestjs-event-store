@@ -25,16 +25,20 @@ export class NatsEventStoreBroker {
         this.clientId = clientId;
       }
 
-      console.log(clusterId, this.clientId, options);
-      this.connection = connect(clusterId, this.clientId, options);
+      this.client = connect(clusterId, this.clientId, options);
 
-      this.connection.on('connect', () => {
+      this.client.on('connect', () => {
         this.isConnected = true;
-        this.logger.log('EventStore connected!');
+        this.logger.log('Nats Streaming EventStore connected!');
       });
-      this.connection.on('closed', () => {
+      this.client.on('disconnect:', () => {
         this.isConnected = false;
-        this.logger.error('EventStore closed!');
+        this.logger.error('Nats Streaming EventStore disconnected!');
+        this.connect(clusterId, this.clientId, options);
+      });
+      this.client.on('close:', () => {
+        this.isConnected = false;
+        this.logger.error('Nats Streaming EventStore closed!');
         this.connect(clusterId, this.clientId, options);
       });
 

@@ -120,6 +120,10 @@ export class NatsEventStore
   async subscribeToPersistentSubscriptions(
     subscriptions: ESPersistentSubscription[]
   ) {
+    if (!this.eventStore.isConnected) {
+      this.logger.error('eventStore is not connected');
+      return;
+    }
     this.persistentSubscriptionsCount = subscriptions.length;
     this.persistentSubscriptions = await Promise.all(
       subscriptions.map(async subscription => {
@@ -216,8 +220,6 @@ export class NatsEventStore
       this.logger.log(`
        Connecting to persistent subscription ${durableName} on stream ${stream}!
       `);
-      console.log(this.eventStore.getClient())
-      console.log(this.eventStore)
 
       const opts = this.eventStore.getClient().subscriptionOptions();
       opts.setDurableName(durableName);
