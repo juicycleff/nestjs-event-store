@@ -23,12 +23,15 @@ $ yarn install @juicycleff/nestjs-event-store
 ```
 
 ## Description
-This module aims to bridge the gap between NestJs and [Event Store](https://eventstore.org). It supports all different subscription strategies of in EventStore.Org,
+This module aims to bridge the gap between NestJs and popular event store brokers like [Event Store](https://eventstore.org) and [NATS Streaming](https://nats.io) with support for kafka coming.
+
+#### [Event Store](https://eventstore.org)
+It supports all different subscription strategies in EventStore.Org,
 such as Volatile, CatchUp and Persistent subscriptions fairly easily. There is support for a storage adapter interface for storing catchup events type last checkpoint position, so
 the checkpoint can be read on start up; The adapter interface is very slim and easy and can be assigned preferably using the `EventStoreModule.registerFeatureAsync` method.
 Adapter data store examples coming soon.
 
-Note: if your featureStreamName is `'$ce-user'`, then you should name your your domain argument should be `user` without `$ce`, for example.
+Note: if your event broker type is Event Store then featureStreamName should look like `'$ce-user'`, then you should name your domain argument should be `user` without `$ce`, for example.
 
 ```typescript
 export class UserCreatedEvent implements IEvent {
@@ -39,7 +42,181 @@ export class UserCreatedEvent implements IEvent {
 ```
 The way this works is we group the event based the first argument in the constructor name and this argument name must be a substring of featureStreamName. I'm sorry you can't pass you your own unique name at the moment, but I will add support for it
 
-### Setup from versions from `v3.0.0`
+#### [NATS Streaming](https://nats.io)
+It supports all both durable/persistent subscription with shared subscription and volatile. It does not have the limitations of [Event Store](https://eventstore.org) stated above.
+
+Note: if your event broker type is NATS then featureStreamName  should look like `'user'`.
+
+### Setup from versions from `v3.1.15`
+#### Setup NATS
+##### Setup root app module for NATS
+
+```typescript
+import { Module } from '@nestjs/common';
+import { EventStoreModule } from '@juicycleff/nestjs-event-store';
+
+@Module({
+  imports: [
+    EventStoreModule.register({
+      type: 'nats',
+      groupId: 'groupId',
+      clusterId: 'clusterId',
+      clientId: 'clientId', // Optional (Auto generated with uuid)
+      options: {
+        url: 'nats://localhost:4222',
+        reconnect: true,
+        maxReconnectAttempts: -1,
+      },
+    }),
+  ]
+})
+export class AppModule {}
+```
+
+##### Setup async root app module
+```typescript
+import { Module } from '@nestjs/common';
+import { EventStoreModule } from '@juicycleff/nestjs-event-store';
+import { EventStoreConfigService } from './eventstore-config.service';
+
+@Module({
+  imports: [
+    EventStoreModule.registerAsync({
+      type: 'nats',
+      useClass: EventStoreConfigService
+    }),
+  ]
+})
+export class AppModule {}
+```
+
+##### Setup feature module
+```typescript
+import { Module } from '@nestjs/common';
+import { UsersController } from './users.controller';
+import { AccountEventHandlers, UserLoggedInEvent } from '@ultimatebackend/core';
+import { AccountSagas } from '../common';
+import { EventStoreModule, EventStoreSubscriptionType } from '@juicycleff/nestjs-event-store';
+
+@Module({
+  imports: [
+    EventStoreModule.registerFeature({
+      featureStreamName: 'user',
+      type: 'nats',
+      subscriptions: [
+        {
+          type: EventStoreSubscriptionType.Persistent,
+          stream: 'account',
+          durableName: 'svc-user',
+        }
+      ],
+      eventHandlers: {
+        UserLoggedInEvent: (data) => new UserLoggedInEvent(data),
+      },
+    })
+  ],
+  providers: [...AccountEventHandlers, AccountSagas],
+  controllers: [UsersController],
+})
+export class UsersModule {}
+```
+
+#### Setup EventStore
+##### Setup root app module for EventStore
+
+```typescript
+import { Module } from '@nestjs/common';
+import { EventStoreModule } from '@juicycleff/nestjs-event-store';
+
+@Module({
+  imports: [
+    EventStoreModule.register({
+      type: 'event-store',
+      tcpEndpoint: {
+        host: 'localhost',
+        port: 1113,
+      },
+      options: {
+        maxRetries: 1000, // Optional
+        maxReconnections: 1000,  // Optional
+        reconnectionDelay: 1000,  // Optional
+        heartbeatInterval: 1000,  // Optional
+        heartbeatTimeout: 1000,  // Optional
+        defaultUserCredentials: {
+          password: 'admin',
+          username: 'chnageit',
+        },
+      },
+    }),
+  ]
+})
+export class AppModule {}
+```
+
+##### Setup async root app module
+```typescript
+import { Module } from '@nestjs/common';
+import { EventStoreModule } from '@juicycleff/nestjs-event-store';
+import { EventStoreConfigService } from './eventstore-config.service';
+
+@Module({
+  imports: [
+    EventStoreModule.registerAsync({
+      type: 'event-store',
+      useClass: EventStoreConfigService
+    }),
+  ]
+})
+export class AppModule {}
+```
+
+##### Setup feature module
+```typescript
+import { Module } from '@nestjs/common';
+import { CommandBus, CqrsModule, EventBus } from '@nestjs/cqrs';
+import { EventStoreModule, EventStore, EventStoreSubscriptionType } from '@juicycleff/nestjs-event-store';
+
+import {
+  UserCommandHandlers,
+  UserLoggedInEvent,
+  UserEventHandlers,
+  UserQueryHandlers,
+} from '../cqrs';
+import { UserSagas } from './sagas';
+import { MongoStore } from './mongo-eventstore-adapter';
+
+@Module({
+  imports: [
+    CqrsModule,
+    EventStoreModule.registerFeature({
+      featureStreamName: '$ce-user',
+      type: 'event-store',
+      store: MongoStore, // Optional mongo store for persisting catchup events position for microservices to mitigate failures. Must implement IAdapterStore
+      subscriptions: [
+        {
+          type: EventStoreSubscriptionType.CatchUp,
+          stream: '$ce-user',
+          resolveLinkTos: true, // Default is true (Optional)
+          lastCheckpoint: 13, // Default is 0 (Optional)
+        },
+      ],
+      eventHandlers: {
+        UserLoggedInEvent: (data) => new UserLoggedInEvent(data),
+      },
+    }),
+  ],
+  
+  providers: [
+    UserSagas,
+    ...UserQueryHandlers,
+    ...UserCommandHandlers,
+    ...UserEventHandlers,
+  ],
+})
+export class UserModule {}
+```
+
+### Setup from versions from `v3.0.0 to 3.0.5`
 ##### Setup root app module
 
 ```typescript
