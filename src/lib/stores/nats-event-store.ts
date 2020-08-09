@@ -229,9 +229,16 @@ export class NatsEventStore
 
       const opts = this.eventStore.getClient().subscriptionOptions();
       opts.setDurableName(durableName);
-      opts.setAckWait(ackWait);
-      opts.setMaxInFlight(maxInFlight);
-      opts.setManualAckMode(manualAcks);
+
+      if (ackWait) {
+        opts.setAckWait(ackWait);
+      }
+      if (maxInFlight) {
+        opts.setMaxInFlight(maxInFlight);
+      }
+      if (manualAcks) {
+        opts.setManualAckMode(manualAcks);
+      }
 
       if (startAt) {
         opts.setStartAtSequence(startAt);
