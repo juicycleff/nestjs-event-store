@@ -121,7 +121,7 @@ export class NatsEventStore
   }
 
   private getStreamId(stream) {
-    return `nest-event-store/${stream}`;
+    return `nest-event-store-${stream}`;
   }
 
   async subscribeToPersistentSubscriptions(
@@ -261,7 +261,8 @@ export class NatsEventStore
           opts
         )) as ExtendedNatsPersistentSubscription;
       resolved.isLive = true;
-      resolved.on('message', this.handleCallback);
+      resolved.on('message', this.onEvent);
+      resolved.on('error', this.onDropped);
 
       return resolved;
     } catch (err) {
@@ -305,7 +306,8 @@ export class NatsEventStore
 
   onDropped(error) {
     // subscription.isLive = false;
-    this.logger.error('onError => ' + error.message);
+    this.logger.error('onDropped => ' + error);
+    this.logger.error('onDropped => ' + error.message);
   }
 
   get isLive(): boolean {
