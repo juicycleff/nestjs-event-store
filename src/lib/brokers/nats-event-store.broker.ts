@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import assert from 'assert';
 import * as uuid from 'uuid';
-import { ClientOpts, connect, Stan } from 'node-nats-streaming';
+import { ClientOpts, connect as stanConnect, Stan } from 'node-nats-streaming';
 import { BrokerTypes } from '../contract';
 
 /**
@@ -25,7 +25,8 @@ export class NatsEventStoreBroker {
         this.clientId = clientId;
       }
 
-      this.client = connect(clusterId, this.clientId, options);
+      console.log(clusterId, this.clientId, options);
+      this.client = stanConnect(clusterId, this.clientId, options);
 
       this.client.on('connect', () => {
         this.isConnected = true;
