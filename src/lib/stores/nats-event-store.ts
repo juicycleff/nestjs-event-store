@@ -52,7 +52,7 @@ export class NatsEventStore
     @Inject(ProvidersConstants.EVENT_STORE_CONNECTION_CONFIG_PROVIDER)
     private readonly configService: EventStoreModuleOptions,
     @Inject(ProvidersConstants.EVENT_STORE_STREAM_CONFIG_PROVIDER)
-    esStreamConfig: EventStoreOptionConfig,
+    private readonly esStreamConfig: EventStoreOptionConfig,
     private readonly explorerService: ExplorerService,
     private readonly eventsBus: EventBus
   ) {
@@ -70,13 +70,21 @@ export class NatsEventStore
       throw new Error('Event store type is not supported  - (nats-event-store.ts)');
     }
 
-    if (esStreamConfig.type === 'nats') {
-      const persistentSubscriptions = esStreamConfig.subscriptions.filter(
+    this.initSubs();
+    this.eventStore.getClient().on('connect', () => {
+      this.initSubs();
+    });
+  }
+
+
+  private initSubs() {
+    if (this.esStreamConfig.type === 'nats') {
+      const persistentSubscriptions = this.esStreamConfig.subscriptions.filter(
         sub => {
           return sub.type === EventStoreSubscriptionType.Persistent;
         }
       );
-      const volatileSubscriptions = esStreamConfig.subscriptions.filter(sub => {
+      const volatileSubscriptions = this.esStreamConfig.subscriptions.filter(sub => {
         return sub.type === EventStoreSubscriptionType.Volatile;
       });
 
@@ -101,10 +109,7 @@ export class NatsEventStore
 
     // tslint:disable-next-line:no-console
     console.log('stream', stream);
-    // tslint:disable-next-line:no-console
-    console.log('eventPayload', event);
     const payload = Buffer.from(JSON.stringify(event));
-    console.log('eventPayload', payload);
 
     const streamId = this.getStreamId(stream ? stream : this.featureStream);
 
@@ -123,8 +128,7 @@ export class NatsEventStore
     subscriptions: ESPersistentSubscription[]
   ) {
     if (!this.eventStore.isConnected) {
-      this.logger.error('eventStore is not connected');
-      // return;
+      return;
     }
     this.persistentSubscriptionsCount = subscriptions.length;
     this.persistentSubscriptions = await Promise.all(
@@ -238,6 +242,9 @@ export class NatsEventStore
       if (this.configService.type === 'event-store') {
         return;
       }
+
+      console.log('stream => ', stream);
+      console.log('opts => ', opts);
 
       const resolved = (await this.eventStore
         .getClient()
