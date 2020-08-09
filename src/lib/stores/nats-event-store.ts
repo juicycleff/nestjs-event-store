@@ -261,8 +261,8 @@ export class NatsEventStore
           opts
         )) as ExtendedNatsPersistentSubscription;
       resolved.isLive = true;
-      resolved.on('message', this.onEvent);
-      resolved.on('error', this.onDropped);
+      resolved.on('message', (msg) => this.onEvent(msg));
+      resolved.on('error', (err) => this.onDropped(err));
 
       return resolved;
     } catch (err) {
