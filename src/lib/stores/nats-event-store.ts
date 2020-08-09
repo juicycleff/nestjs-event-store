@@ -103,11 +103,13 @@ export class NatsEventStore
     console.log('stream', stream);
     // tslint:disable-next-line:no-console
     console.log('eventPayload', event);
+    const payload = Buffer.from(JSON.stringify(event));
+    console.log('eventPayload', payload);
 
     const streamId = this.getStreamId(stream ? stream : this.featureStream);
 
     try {
-      await this.eventStore.getClient().publish(streamId, Buffer.from(event));
+      await this.eventStore.getClient().publish(streamId, payload);
     } catch (err) {
       this.logger.error(err);
     }
@@ -249,15 +251,15 @@ export class NatsEventStore
 
       return resolved;
     } catch (err) {
-      this.logger.error(err.message);
+      this.logger.error(err);
     }
   }
 
   private async handleCallback(err, msg) {
     // tslint:disable-next-line:no-console
-    console.log(err);
+    this.logger.error(err);
     // tslint:disable-next-line:no-console
-    console.log(msg);
+    this.logger.log(msg);
     if (err) {
       this.onDropped(err);
     } else {
