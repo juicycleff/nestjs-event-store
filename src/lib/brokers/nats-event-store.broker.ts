@@ -25,7 +25,6 @@ export class NatsEventStoreBroker {
         this.clientId = clientId;
       }
 
-      console.log(clusterId, this.clientId, options);
       this.client = stanConnect(clusterId, this.clientId, options);
 
       this.client.on('connect', () => {

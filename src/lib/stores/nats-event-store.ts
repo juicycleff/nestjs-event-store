@@ -122,7 +122,7 @@ export class NatsEventStore
   ) {
     if (!this.eventStore.isConnected) {
       this.logger.error('eventStore is not connected');
-      return;
+      // return;
     }
     this.persistentSubscriptionsCount = subscriptions.length;
     this.persistentSubscriptions = await Promise.all(
