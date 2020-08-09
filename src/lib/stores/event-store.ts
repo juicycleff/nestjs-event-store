@@ -33,7 +33,7 @@ import {
   ProvidersConstants,
   EventStoreModuleOptions,
 } from './contract';
-import { NestjsEventStore } from './nestjs-event-store.class';
+import { EventStoreBroker } from './brokers';
 
 /**
  * @class EventStore
@@ -41,7 +41,7 @@ import { NestjsEventStore } from './nestjs-event-store.class';
 @Injectable()
 export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleInit, IMessageSource {
   private logger = new Logger(this.constructor.name);
-  private eventStore: NestjsEventStore;
+  private eventStore: EventStoreBroker;
   private store: IAdapterStore;
   private eventHandlers: IEventConstructors;
   private subject$: Subject<IEvent>;
@@ -65,30 +65,35 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
 
     this.eventStore = eventStore;
     this.featureStream = esStreamConfig.featureStreamName;
-    this.store = esStreamConfig.store;
+    if (esStreamConfig.type === 'event-store') {
+      this.store = esStreamConfig.store;
+    } else {
+      throw new Error('Event store type is not supported');
+    }
     this.addEventHandlers(esStreamConfig.eventHandlers);
-    this.eventStore.connect(configService.options, configService.tcpEndpoint);
+    if (configService.type === 'event-store') {
+      this.eventStore.connect(configService.options, configService.tcpEndpoint);
+    } else {
+      throw new Error('Event store type is not supported');
+    }
 
     const catchupSubscriptions = esStreamConfig.subscriptions.filter((sub) => {
       return sub.type === EventStoreSubscriptionType.CatchUp;
     });
-
     const persistentSubscriptions = esStreamConfig.subscriptions.filter((sub) => {
       return sub.type === EventStoreSubscriptionType.Persistent;
     });
-
     const volatileSubscriptions = esStreamConfig.subscriptions.filter((sub) => {
       return sub.type === EventStoreSubscriptionType.Volatile;
     });
 
+
     this.subscribeToCatchUpSubscriptions(
       catchupSubscriptions as ESCatchUpSubscription[],
     );
-
     this.subscribeToPersistentSubscriptions(
       persistentSubscriptions as ESPersistentSubscription[],
     );
-
     this.subscribeToVolatileSubscriptions(
       volatileSubscriptions as ESVolatileSubscription[],
     );
@@ -108,7 +113,7 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
     const streamId = stream ? stream : this.featureStream;
 
     try {
-      await this.eventStore.getConnection().appendToStream(streamId, expectedVersion.any, [eventPayload]);
+      await this.eventStore.getClient().appendToStream(streamId, expectedVersion.any, [eventPayload]);
     } catch (err) {
       this.logger.error(err);
     }
@@ -159,7 +164,7 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
   ): ExtendedCatchUpSubscription {
     this.logger.log(`Catching up and subscribing to stream ${stream}!`);
     try {
-      return this.eventStore.getConnection().subscribeToStreamFrom(
+      return this.eventStore.getClient().subscribeToStreamFrom(
         stream,
         lastCheckpoint,
         resolveLinkTos,
@@ -179,7 +184,7 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
   async subscribeToVolatileSubscription(stream: string, resolveLinkTos: boolean = true): Promise<ExtendedVolatileSubscription> {
     this.logger.log(`Volatile and subscribing to stream ${stream}!`);
     try {
-      const resolved = await this.eventStore.getConnection().subscribeToStream(
+      const resolved = await this.eventStore.getClient().subscribeToStream(
         stream,
         resolveLinkTos,
         (sub, payload) => this.onEvent(sub, payload),
@@ -238,7 +243,7 @@ export class EventStore implements IEventPublisher, OnModuleDestroy, OnModuleIni
        Connecting to persistent subscription ${subscriptionName} on stream ${stream}!
       `);
 
-      const resolved = await this.eventStore.getConnection().connectToPersistentSubscription(
+      const resolved = await this.eventStore.getClient().connectToPersistentSubscription(
         stream,
         subscriptionName,
         (sub, payload) => this.onEvent(sub, payload),

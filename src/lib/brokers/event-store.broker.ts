@@ -6,7 +6,7 @@ import { EventStoreNodeConnection, ConnectionSettings, TcpEndPoint, createConnec
 /**
  * @description Event store setup from eventstore.org
  */
-export class NestjsEventStore {
+export class EventStoreBrokerClass {
   [x: string]: any;
   private logger: Logger = new Logger(this.constructor.name);
   private connection: EventStoreNodeConnection;
@@ -24,11 +24,11 @@ export class NestjsEventStore {
 
       this.connection.on('connected', () => {
         this.isConnected = true;
-        this.logger.log('EventStore connected!');
+        this.logger.log('EventStoreClass connected!');
       });
       this.connection.on('closed', () => {
         this.isConnected = false;
-        this.logger.error('EventStore closed!');
+        this.logger.error('EventStoreClass closed!');
         this.connect(options, endpoint);
       });
 
