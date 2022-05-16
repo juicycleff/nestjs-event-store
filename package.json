@@ -56,7 +56,7 @@
     "@nestjs/common": "^7.4.2",
     "@nestjs/core": "^7.4.2",
     "@nestjs/cqrs": "^7.0.0",
-    "axios": "^0.19.2",
+    "axios": "^0.21.2",
     "protobufjs": "^6.10.1",
     "uuid": "^8.3.0"
   },
