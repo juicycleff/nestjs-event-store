@@ -13,7 +13,6 @@ import {
   EventBus,
   IMessageSource
 } from '@nestjs/cqrs';
-import { ExplorerService } from '@nestjs/cqrs/dist/services/explorer.service';
 import { Subject } from 'rxjs';
 import {
   EventStoreOptionConfig,
@@ -27,7 +26,7 @@ import {
   EventStoreModuleOptions
 } from '../contract';
 import { NatsEventStoreBroker } from '../brokers';
-import { Message, SubscriptionOptions } from 'node-nats-streaming';
+import { Message } from 'node-nats-streaming';
 
 /**
  * @class EventStore
@@ -53,7 +52,6 @@ export class NatsEventStore
     private readonly configService: EventStoreModuleOptions,
     @Inject(ProvidersConstants.EVENT_STORE_STREAM_CONFIG_PROVIDER)
     private readonly esStreamConfig: EventStoreOptionConfig,
-    private readonly explorerService: ExplorerService,
     private readonly eventsBus: EventBus
   ) {
     this.eventStore = eventStore;
@@ -67,7 +65,9 @@ export class NatsEventStore
         configService.options
       );
     } else {
-      throw new Error('Event store type is not supported  - (nats-event-store.ts)');
+      throw new Error(
+        'Event store type is not supported  - (nats-event-store.ts)'
+      );
     }
 
     this.initSubs();
@@ -76,7 +76,6 @@ export class NatsEventStore
     });
   }
 
-
   private initSubs() {
     if (this.esStreamConfig.type === 'nats') {
       const persistentSubscriptions = this.esStreamConfig.subscriptions.filter(
@@ -84,9 +83,11 @@ export class NatsEventStore
           return sub.type === EventStoreSubscriptionType.Persistent;
         }
       );
-      const volatileSubscriptions = this.esStreamConfig.subscriptions.filter(sub => {
-        return sub.type === EventStoreSubscriptionType.Volatile;
-      });
+      const volatileSubscriptions = this.esStreamConfig.subscriptions.filter(
+        sub => {
+          return sub.type === EventStoreSubscriptionType.Volatile;
+        }
+      );
 
       this.subscribeToPersistentSubscriptions(
         persistentSubscriptions as ESPersistentSubscription[]
@@ -95,11 +96,13 @@ export class NatsEventStore
         volatileSubscriptions as ESVolatileSubscription[]
       );
     } else {
-      throw new Error('Event store type is not supported for feature - nats-event-store.ts');
+      throw new Error(
+        'Event store type is not supported for feature - nats-event-store.ts'
+      );
     }
   }
 
-  async publish(event: IEvent & {handlerType?: string}, stream?: string) {
+  async publish(event: IEvent & { handlerType?: string }, stream?: string) {
     if (event === undefined) {
       return;
     }
@@ -138,7 +141,7 @@ export class NatsEventStore
           subscription?.startAt,
           subscription.maxInflight,
           subscription?.ackWait,
-          subscription?.manualAcks,
+          subscription?.manualAcks
         );
       })
     );
@@ -149,13 +152,13 @@ export class NatsEventStore
   ) {
     this.volatileSubscriptionsCount = subscriptions.length;
     this.volatileSubscriptions = await Promise.all(
-      subscriptions.map(async (subscription) => {
+      subscriptions.map(async subscription => {
         return await this.subscribeToVolatileSubscription(
           this.getStreamId(subscription.stream),
           subscription.startAt,
           subscription.maxInflight,
           subscription?.ackWait,
-          subscription?.manualAcks,
+          subscription?.manualAcks
         );
       })
     );
@@ -190,8 +193,8 @@ export class NatsEventStore
           this.configService.groupId,
           opts
         )) as ExtendedNatsVolatileSubscription;
-      resolved.on('message', (msg) => this.onEvent(msg));
-      resolved.on('error', (err) => this.onDropped(err));
+      resolved.on('message', msg => this.onEvent(msg));
+      resolved.on('error', err => this.onDropped(err));
       this.logger.log('Volatile processing of EventStore events started!');
       resolved.isLive = true;
       return resolved;
@@ -266,8 +269,8 @@ export class NatsEventStore
           opts
         )) as ExtendedNatsPersistentSubscription;
       resolved.isLive = true;
-      resolved.on('message', (msg) => this.onEvent(msg));
-      resolved.on('error', (err) => this.onDropped(err));
+      resolved.on('message', msg => this.onEvent(msg));
+      resolved.on('error', err => this.onDropped(err));
 
       return resolved;
     } catch (err) {
@@ -276,7 +279,9 @@ export class NatsEventStore
   }
 
   async onEvent(payload: Message) {
-    const data: any & {handlerType?: string} = JSON.parse(payload.getRawData().toString());
+    const data: any & { handlerType?: string } = JSON.parse(
+      payload.getRawData().toString()
+    );
     const handlerType = data.handlerType;
     delete data.handlerType;
     const handler = this.eventHandlers[handlerType];
@@ -287,7 +292,7 @@ export class NatsEventStore
 
     const eventType = payload.getSubject();
     if (this.eventHandlers && this.eventHandlers[handlerType]) {
-      this.subject$.next(this.eventHandlers[handlerType](...data));
+      this.subject$.next(this.eventHandlers[handlerType](...Object.values(data)));
     } else {
       Logger.warn(
         `Event of type ${eventType} not handled`,
