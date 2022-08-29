@@ -1,4 +1,5 @@
 import { DynamicModule, Module } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
 import {
   EventStoreModuleOptions,
   EventStoreModuleAsyncOptions,
@@ -6,7 +7,6 @@ import {
   EventStoreFeatureAsyncOptions
 } from './contract';
 import { EventStoreCoreModule } from './event-store-core.module';
-import { CqrsModule } from '@nestjs/cqrs';
 
 @Module({
   imports: [CqrsModule]

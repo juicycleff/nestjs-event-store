@@ -17,7 +17,6 @@ import {
   EventBus,
   IMessageSource
 } from '@nestjs/cqrs';
-import { ExplorerService } from '@nestjs/cqrs/dist/services/explorer.service';
 import * as Long from 'long';
 import { Subject } from 'rxjs';
 import { v4 } from 'uuid';
@@ -75,7 +74,6 @@ export class EventStore
     configService: EventStoreModuleOptions,
     @Inject(ProvidersConstants.EVENT_STORE_STREAM_CONFIG_PROVIDER)
     esStreamConfig: EventStoreOptionConfig,
-    private readonly explorerService: ExplorerService,
     private readonly eventsBus: EventBus
   ) {
     this.eventStore = eventStore;

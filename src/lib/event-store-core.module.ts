@@ -1,5 +1,4 @@
 import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
-import { ExplorerService } from '@nestjs/cqrs/dist/services/explorer.service';
 import {
   EventStoreFeatureAsyncOptions,
   EventStoreFeatureOptionsFactory,
@@ -89,12 +88,12 @@ export class EventStoreCoreModule {
       throw new Error('Config missing');
     }
 
-    const CurrentStore = config.type === 'event-store' ? EventStore : NatsEventStore;
+    const CurrentStore =
+      config.type === 'event-store' ? EventStore : NatsEventStore;
 
     return {
       module: EventStoreCoreModule,
       providers: [
-        ExplorerService,
         {
           provide: ProvidersConstants.EVENT_STORE_STREAM_CONFIG_PROVIDER,
           useValue: {
@@ -103,7 +102,7 @@ export class EventStoreCoreModule {
         },
         CurrentStore
       ],
-      exports: [CurrentStore, ExplorerService]
+      exports: [CurrentStore]
     };
   }
 
@@ -121,12 +120,13 @@ export class EventStoreCoreModule {
     };
 
     const asyncProviders = this.createFeatureAsyncProviders(options);
-    const CurrentStore = options.type === 'event-store' ? EventStore : NatsEventStore;
+    const CurrentStore =
+      options.type === 'event-store' ? EventStore : NatsEventStore;
 
     return {
       module: EventStoreCoreModule,
-      providers: [...asyncProviders, ExplorerService, configProv, CurrentStore],
-      exports: [CurrentStore, ExplorerService]
+      providers: [...asyncProviders, configProv, CurrentStore],
+      exports: [CurrentStore]
     };
   }
 
