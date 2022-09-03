@@ -167,20 +167,26 @@ let NatsEventStore = class NatsEventStore {
         }
     }
     async onEvent(payload) {
-        const data = JSON.parse(payload.getRawData().toString());
-        const handlerType = data.handlerType;
-        delete data.handlerType;
-        const handler = this.eventHandlers[handlerType];
-        if (!handler) {
-            this.logger.error('Received event that could not be handled!');
-            return;
+        try {
+            const data = JSON.parse(payload.getRawData().toString());
+            const handlerType = data.handlerType;
+            delete data.handlerType;
+            const handler = this.eventHandlers[handlerType];
+            if (!handler) {
+                this.logger.error('Received event that could not be handled!');
+                return;
+            }
+            const eventType = payload.getSubject();
+            if (this.eventHandlers && this.eventHandlers[handlerType]) {
+                this.subject$.next(this.eventHandlers[handlerType](...Object.values(data)));
+            }
+            else {
+                common_1.Logger.warn(`Event of type ${eventType} not handled`, this.constructor.name);
+            }
         }
-        const eventType = payload.getSubject();
-        if (this.eventHandlers && this.eventHandlers[handlerType]) {
-            this.subject$.next(this.eventHandlers[handlerType](...Object.values(data)));
-        }
-        else {
-            common_1.Logger.warn(`Event of type ${eventType} not handled`, this.constructor.name);
+        catch (err) {
+            this.logger.error(`PAYLOAD=${payload.getRawData().toString()}`);
+            this.logger.error(err);
         }
     }
     onDropped(error) {
