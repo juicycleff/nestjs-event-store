@@ -178,7 +178,7 @@ let NatsEventStore = class NatsEventStore {
             delete data.handlerType;
             const handler = this.eventHandlers[handlerType];
             if (!handler) {
-                this.logger.error('Received event that could not be handled!');
+                this.logger.error(`Received event of handlerType ${handlerType} that could not be handled!`);
                 return;
             }
             const eventType = payload.getSubject();
@@ -190,7 +190,7 @@ let NatsEventStore = class NatsEventStore {
             }
         }
         catch (err) {
-            this.logger.error(`PAYLOAD=${payload.getRawData().toString()}`);
+            this.logger.error(`PAYLOAD=${payload.getRawData()?.toString()}`);
             this.logger.error(err);
         }
     }
